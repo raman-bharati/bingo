@@ -15,10 +15,10 @@ RUN apt-get update \
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www/html
-COPY . .
+# Copy app files
+COPY . /var/www/html
 
-RUN composer install --optimize-autoloader --no-scripts --no-interaction --no-dev
+RUN composer install --optimize-autoloader --no-scripts --no-interaction --no-dev -d /var/www/html
 
 RUN chown -R www-data:www-data /var/www/html
 
