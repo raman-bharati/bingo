@@ -48,6 +48,14 @@ Vagrantfile
 #-------------------------
 # Temporary Files
 #-------------------------
+temp/
+tmp/
+.DS_*
+.sass-cache/
+node_modules/
+vendor/
+package-lock.json
+composer.lock
 writable/cache/*
 !writable/cache/index.html
 
