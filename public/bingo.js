@@ -78,6 +78,10 @@ function createEmptyBoard(size) {
 }
 
 function renderBoard() {
+  if (!elements.board) {
+    console.warn("Board element not found");
+    return;
+  }
   elements.board.innerHTML = "";
   elements.board.style.setProperty("--board-size", state.boardSize);
   elements.board.dataset.size = String(state.boardSize);
@@ -169,6 +173,10 @@ function drawCompletedLines() {
 }
 
 function renderPicker() {
+  if (!elements.picker) {
+    console.warn("Picker element not found");
+    return;
+  }
   elements.picker.innerHTML = "";
   for (let i = 1; i <= state.maxNumber; i++) {
     const button = document.createElement("button");
@@ -184,6 +192,10 @@ function renderPicker() {
 }
 
 function renderCallGrid() {
+  if (!elements.callGrid) {
+    console.warn("Call grid element not found");
+    return;
+  }
   elements.callGrid.innerHTML = "";
   for (let i = 1; i <= state.maxNumber; i++) {
     const button = document.createElement("button");
@@ -521,6 +533,17 @@ function applyState(nextState) {
 }
 
 function renderStatus() {
+  // Defensive checks for required elements
+  if (!elements.roomStatus || !elements.turnStatus || !elements.linesStatus || !elements.playerList) {
+    console.warn("Some status elements not found:", { 
+      roomStatus: elements.roomStatus, 
+      turnStatus: elements.turnStatus, 
+      linesStatus: elements.linesStatus, 
+      playerList: elements.playerList 
+    });
+    return;
+  }
+  
   if (!state.roomCode) {
     elements.roomStatus.textContent = "Not connected";
   } else {
@@ -534,36 +557,48 @@ function renderStatus() {
   if (state.winnerId) {
     const winner = state.players.find((p) => p.id === state.winnerId);
     elements.turnStatus.textContent = winner ? `${winner.name} wins!` : "Game over.";
-    elements.newGame.textContent = "Start next game";
-    elements.newGame.disabled = false;
-    if (winner && !elements.winnerModal.dataset.shown) {
+    if (elements.newGame) {
+      elements.newGame.textContent = "Start next game";
+      elements.newGame.disabled = false;
+    }
+    if (winner && elements.winnerModal && !elements.winnerModal.dataset.shown) {
       showWinnerCelebration(winner.name);
     }
   } else if (!allReady()) {
     elements.turnStatus.textContent = "Waiting for all players to be ready.";
-    elements.newGame.textContent = "Start game";
-    elements.newGame.disabled = true;
+    if (elements.newGame) {
+      elements.newGame.textContent = "Start game";
+      elements.newGame.disabled = true;
+    }
   } else if (!state.started) {
     elements.turnStatus.textContent = "Ready to start the game.";
-    elements.newGame.textContent = "Start game";
-    elements.newGame.disabled = false;
+    if (elements.newGame) {
+      elements.newGame.textContent = "Start game";
+      elements.newGame.disabled = false;
+    }
   } else if (currentPlayer) {
     elements.turnStatus.textContent = isMyTurn ? "Your turn to call." : `${currentPlayer.name} is calling.`;
-    elements.newGame.textContent = "Start next game";
-    elements.newGame.disabled = true;
+    if (elements.newGame) {
+      elements.newGame.textContent = "Start next game";
+      elements.newGame.disabled = true;
+    }
   }
 
   const myLines = playerIndex !== -1 ? state.players[playerIndex]?.lines || 0 : 0;
   elements.linesStatus.textContent = String(myLines);
-  elements.lineLetters.textContent = buildLineLetters(myLines);
+  if (elements.lineLetters) {
+    elements.lineLetters.textContent = buildLineLetters(myLines);
+  }
 
-  if (state.lastCall) {
-    elements.lastCall.textContent = String(state.lastCall.number);
-    const by = state.players.find((p) => p.id === state.lastCall.by);
-    elements.callMeta.textContent = by ? `Called by ${by.name}` : "";
-  } else {
-    elements.lastCall.textContent = "None";
-    elements.callMeta.textContent = "Waiting for first call.";
+  if (elements.lastCall && elements.callMeta) {
+    if (state.lastCall) {
+      elements.lastCall.textContent = String(state.lastCall.number);
+      const by = state.players.find((p) => p.id === state.lastCall.by);
+      elements.callMeta.textContent = by ? `Called by ${by.name}` : "";
+    } else {
+      elements.lastCall.textContent = "None";
+      elements.callMeta.textContent = "Waiting for first call.";
+    }
   }
 
   elements.playerList.innerHTML = "";
@@ -594,6 +629,10 @@ function renderStatus() {
 }
 
 function renderLeaderboard() {
+  if (!elements.leaderboard) {
+    console.warn("Leaderboard element not found");
+    return;
+  }
   elements.leaderboard.innerHTML = "";
   const sorted = [...state.players].sort((a, b) => (b.wins || 0) - (a.wins || 0));
   sorted.forEach((player, idx) => {
