@@ -592,7 +592,8 @@ function renderStatus() {
       elements.newGame.textContent = "Start next game";
       elements.newGame.disabled = false;
     }
-    if (winner && elements.winnerModal && !elements.winnerModal.dataset.shown) {
+    // Only show modal if it hasn't been shown for this game
+    if (winner && elements.winnerModal && elements.winnerModal.dataset.shown === undefined) {
       showWinnerCelebration(winner.name);
     }
   } else if (!allReady()) {
@@ -752,6 +753,11 @@ function startNextGame() {
       state.board = createEmptyBoard(state.boardSize);
       state.selectedCell = null;
       state.inputBuffer = "";
+      // Reset modal for new game
+      if (elements.winnerModal) {
+        delete elements.winnerModal.dataset.shown;
+        elements.winnerModal.style.display = "none";
+      }
       applyState(data.state);
       renderBoard();
       renderPicker();
@@ -910,6 +916,7 @@ function isInCompletedLine(r, c) {
 }
 
 function showWinnerCelebration(name) {
+  if (!elements.winnerModal || !elements.winnerName) return;
   elements.winnerName.textContent = name;
   elements.winnerModal.dataset.shown = "true";
   elements.winnerModal.style.display = "flex";
@@ -917,8 +924,10 @@ function showWinnerCelebration(name) {
 }
 
 function closeWinnerModal() {
+  if (!elements.winnerModal) return;
   elements.winnerModal.style.display = "none";
-  delete elements.winnerModal.dataset.shown;
+  // Mark modal as explicitly closed for this game
+  elements.winnerModal.dataset.shown = "closed";
   renderStatus();
   updateLockButton();
 }
