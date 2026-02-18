@@ -46,6 +46,7 @@ const elements = {
   newGame: document.getElementById("newGame"),
   winnerModal: document.getElementById("winnerModal"),
   winnerName: document.getElementById("winnerName"),
+  leaderboard: document.getElementById("leaderboard"),
 };
 
 const storage = {
@@ -80,6 +81,8 @@ function renderBoard() {
   elements.board.innerHTML = "";
   elements.board.style.setProperty("--board-size", state.boardSize);
   elements.board.dataset.size = String(state.boardSize);
+  elements.board.style.position = "relative";
+  
   state.board.forEach((row, r) => {
     row.forEach((cell, c) => {
       const div = document.createElement("div");
@@ -105,6 +108,63 @@ function renderBoard() {
       div.addEventListener("touchend", (event) => handleCellTouch(event, r, c), { passive: false });
       elements.board.appendChild(div);
     });
+  });
+  
+  // Draw completed lines
+  drawCompletedLines();
+}
+
+function drawCompletedLines() {
+  // Remove existing line overlays
+  const existingLines = elements.board.querySelectorAll(".line-overlay");
+  existingLines.forEach(line => line.remove());
+  
+  const board = elements.board;
+  const boardRect = board.getBoundingClientRect();
+  const cellSize = boardRect.width / state.boardSize;
+  const lines = getCompletedLines();
+  
+  lines.forEach(line => {
+    const overlay = document.createElement("div");
+    overlay.className = "line-overlay";
+    
+    if (line.type === "row") {
+      // Horizontal line
+      overlay.classList.add("horizontal");
+      overlay.style.top = (line.index * cellSize + cellSize / 2) + "px";
+      overlay.style.width = "100%";
+      overlay.style.height = "3px";
+    } else if (line.type === "col") {
+      // Vertical line
+      overlay.classList.add("vertical");
+      overlay.style.left = (line.index * cellSize + cellSize / 2) + "px";
+      overlay.style.height = "100%";
+      overlay.style.width = "3px";
+    } else if (line.type === "diag" && line.index === 0) {
+      // Top-left to bottom-right diagonal
+      const size = state.boardSize * cellSize;
+      const lineLength = Math.sqrt(2) * size;
+      overlay.classList.add("diagonal", "tlbr");
+      overlay.style.width = lineLength + "px";
+      overlay.style.height = "3px";
+      overlay.style.top = "0";
+      overlay.style.left = "0";
+      overlay.style.transformOrigin = "left top";
+      overlay.style.transform = "rotate(45deg)";
+    } else if (line.type === "diag" && line.index === 1) {
+      // Top-right to bottom-left diagonal
+      const size = state.boardSize * cellSize;
+      const lineLength = Math.sqrt(2) * size;
+      overlay.classList.add("diagonal", "bltr");
+      overlay.style.width = lineLength + "px";
+      overlay.style.height = "3px";
+      overlay.style.top = "0";
+      overlay.style.right = "0";
+      overlay.style.transformOrigin = "right top";
+      overlay.style.transform = "rotate(-45deg)";
+    }
+    
+    board.appendChild(overlay);
   });
 }
 
@@ -430,6 +490,7 @@ function applyState(nextState) {
   renderPicker();
   renderCallGrid();
   renderStatus();
+  renderLeaderboard();
   updateLockButton();
 }
 
@@ -502,6 +563,28 @@ function renderStatus() {
     button.disabled = alreadyCalled || !isMyTurn || !allReady() || !state.started || !!state.winnerId;
     button.classList.toggle("called", alreadyCalled);
   });
+
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  elements.leaderboard.innerHTML = "";
+  const sorted = [...state.players].sort((a, b) => (b.wins || 0) - (a.wins || 0));
+  sorted.forEach((player, idx) => {
+    const row = document.createElement("div");
+    row.className = "leaderboard-row";
+    if (player.id === state.playerId) {
+      row.classList.add("current-player");
+    }
+    const medal = ["🥇", "🥈", "🥉"][idx] || "•";
+    const name = document.createElement("span");
+    name.textContent = `${medal} ${player.name}`;
+    const wins = document.createElement("span");
+    wins.textContent = `${player.wins || 0} win${(player.wins || 0) !== 1 ? "s" : ""}`;
+    row.appendChild(name);
+    row.appendChild(wins);
+    elements.leaderboard.appendChild(row);
+  });
 }
 
 function callNumber(number) {
@@ -550,7 +633,13 @@ function startNextGame() {
         alert(data.error || "New game failed.");
         return;
       }
+      state.board = createEmptyBoard(state.boardSize);
+      state.selectedCell = null;
+      state.inputBuffer = "";
       applyState(data.state);
+      renderBoard();
+      renderPicker();
+      updateLockButton();
     })
     .catch(() => alert("New game failed."));
 }
@@ -714,6 +803,8 @@ function showWinnerCelebration(name) {
 function closeWinnerModal() {
   elements.winnerModal.style.display = "none";
   delete elements.winnerModal.dataset.shown;
+  renderStatus();
+  updateLockButton();
 }
 
 function playConfetti() {
