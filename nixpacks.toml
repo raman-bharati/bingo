@@ -1,12 +1,8 @@
 [phases.setup]
-cmds = [
-    'apt-get update',
-    'apt-get install -y libicu-dev',
-    'docker-php-ext-install intl pdo pdo_mysql'
-]
+cmds = ['cp php.ini /usr/local/etc/php/conf.d/custom.ini || cp php.ini /etc/php/8.2/cli/conf.d/custom.ini || true']
 
 [phases.install]
-cmds = ['composer install --optimize-autoloader --no-scripts --no-interaction --no-dev']
+cmds = ['composer install --optimize-autoloader --no-scripts --no-interaction --no-dev --ignore-platform-req=ext-intl --ignore-platform-req=ext-pdo --ignore-platform-req=ext-pdo_mysql']
 
 [start]
 cmd = 'php -S 0.0.0.0:$PORT -t public'
