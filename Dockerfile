@@ -1,30 +1,22 @@
-# Build stage
-FROM php:8.2-cli AS builder
+FROM php:8.2-cli
 
+# Install required PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev \
-    && docker-php-ext-install intl pdo pdo_mysql \
+    && docker-php-ext-install -j$(nproc) intl pdo pdo_mysql \
+    && apt-get remove -y libicu-dev \
+    && apt-get autoremove -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Install Composer
+COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 COPY . .
 
+# Install dependencies (production only)
 RUN composer install --optimize-autoloader --no-scripts --no-interaction --no-dev && \
-    rm -rf vendor/.git vendor/*/.git vendor/*/*/.git vendor/*/*/*/.git
-
-# Runtime stage
-FROM php:8.2-cli
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libicu72 \
-    && docker-php-ext-install intl pdo pdo_mysql \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-WORKDIR /app
-
-COPY --from=builder /app /app
+    rm -rf vendor/.git vendor/*/.git vendor/*/*/.git
 
 EXPOSE 8080
 
