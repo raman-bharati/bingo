@@ -1,0 +1,2 @@
+[phases.setup]
+nixpkgs = ["php80-intl", "php80-pdo_mysql"]
