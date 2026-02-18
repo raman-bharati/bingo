@@ -19,6 +19,8 @@ const state = {
   lastCall: null,
   started: false,
   pollTimer: null,
+  lastTapAt: 0,
+  lastTapCell: null,
 };
 
 const elements = {
@@ -91,6 +93,7 @@ function renderBoard() {
       }
       div.addEventListener("click", () => handleCellClick(r, c));
       div.addEventListener("dblclick", () => handleCellCall(r, c));
+      div.addEventListener("touchend", (event) => handleCellTouch(event, r, c), { passive: false });
       elements.board.appendChild(div);
     });
   });
@@ -143,6 +146,23 @@ function handleCellCall(row, col) {
     return;
   }
   callNumber(number);
+}
+
+function handleCellTouch(event, row, col) {
+  event.preventDefault();
+  const now = Date.now();
+  const sameCell = state.lastTapCell && state.lastTapCell[0] === row && state.lastTapCell[1] === col;
+  const isDoubleTap = sameCell && now - state.lastTapAt < 300;
+
+  state.lastTapAt = now;
+  state.lastTapCell = [row, col];
+
+  if (isDoubleTap) {
+    handleCellCall(row, col);
+    return;
+  }
+
+  handleCellClick(row, col);
 }
 
 function selectCell(row, col) {
