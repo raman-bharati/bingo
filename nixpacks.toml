@@ -1,5 +1,0 @@
-[provider]
-name = "php"
-
-[provider.compile]
-cmds = ["docker-php-ext-install intl pdo_mysql"]
