@@ -348,13 +348,17 @@ class BingoController extends BaseController
 
     private function readRoom(string $roomCode): ?array
     {
-        $row = $this->roomModel->where('room_code', $roomCode)->first();
-        if (!$row) {
-            return null;
-        }
+        try {
+            $row = $this->roomModel->where('room_code', $roomCode)->first();
+            if (!$row) {
+                return null;
+            }
 
-        $decoded = json_decode($row['state'] ?? '', true);
-        return is_array($decoded) ? $decoded : null;
+            $decoded = json_decode($row['state'] ?? '', true);
+            return is_array($decoded) ? $decoded : null;
+        } catch (\Throwable $e) {
+            return $this->readRoomFromFile($roomCode);
+        }
     }
 
     private function writeRoom(string $roomCode, array $room): void
@@ -364,13 +368,62 @@ class BingoController extends BaseController
             'state' => json_encode($room),
         ];
 
-        $row = $this->roomModel->where('room_code', $roomCode)->first();
-        if ($row) {
-            $this->roomModel->update($row['id'], $payload);
-            return;
+        try {
+            $row = $this->roomModel->where('room_code', $roomCode)->first();
+            if ($row) {
+                $this->roomModel->update($row['id'], $payload);
+                return;
+            }
+
+            $this->roomModel->insert($payload);
+        } catch (\Throwable $e) {
+            $this->writeRoomToFile($roomCode, $room);
+        }
+    }
+
+    private function readRoomFromFile(string $roomCode): ?array
+    {
+        $path = $this->getRoomStorePath();
+        if (!is_file($path)) {
+            return null;
         }
 
-        $this->roomModel->insert($payload);
+        $contents = file_get_contents($path);
+        if ($contents === false) {
+            return null;
+        }
+
+        $data = json_decode($contents, true);
+        if (!is_array($data)) {
+            return null;
+        }
+
+        $room = $data[$roomCode] ?? null;
+        return is_array($room) ? $room : null;
+    }
+
+    private function writeRoomToFile(string $roomCode, array $room): void
+    {
+        $path = $this->getRoomStorePath();
+        $data = [];
+
+        if (is_file($path)) {
+            $contents = file_get_contents($path);
+            if ($contents !== false) {
+                $decoded = json_decode($contents, true);
+                if (is_array($decoded)) {
+                    $data = $decoded;
+                }
+            }
+        }
+
+        $data[$roomCode] = $room;
+        file_put_contents($path, json_encode($data));
+    }
+
+    private function getRoomStorePath(): string
+    {
+        return WRITEPATH . 'bingo_rooms.json';
     }
 
     private function findPlayerIndex(array $room, string $playerId): int
