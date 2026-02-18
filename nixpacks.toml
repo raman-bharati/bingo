@@ -1,2 +1,5 @@
-[phases.setup]
-nixpkgs = ["php80-intl", "php80-pdo_mysql"]
+[provider]
+name = "php"
+
+[provider.compile]
+cmds = ["docker-php-ext-install intl pdo_mysql"]
