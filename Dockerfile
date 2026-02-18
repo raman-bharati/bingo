@@ -1,22 +1,21 @@
 FROM php:8.2-cli
 
-# Install required PHP extensions
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
     libicu-dev \
-    && docker-php-ext-install -j$(nproc) intl pdo pdo_mysql \
-    && apt-get remove -y libicu-dev \
-    && apt-get autoremove -y \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    libpq-dev \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
-COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
+RUN docker-php-ext-configure intl && docker-php-ext-install intl pdo pdo_mysql
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 COPY . .
 
-# Install dependencies (production only)
-RUN composer install --optimize-autoloader --no-scripts --no-interaction --no-dev && \
-    rm -rf vendor/.git vendor/*/.git vendor/*/*/.git
+RUN composer install --optimize-autoloader --no-scripts --no-interaction --no-dev
 
 EXPOSE 8080
 
