@@ -29,4 +29,4 @@ RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /e
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
