@@ -5,4 +5,4 @@ cmds = ['cp php.ini /usr/local/etc/php/conf.d/custom.ini || cp php.ini /etc/php/
 cmds = ['composer install --optimize-autoloader --no-scripts --no-interaction --no-dev --ignore-platform-req=ext-intl --ignore-platform-req=ext-pdo --ignore-platform-req=ext-pdo_mysql']
 
 [start]
-cmd = 'php -S 0.0.0.0:$PORT -t public'
+cmd = 'php -S 0.0.0.0:$PORT router.php'
