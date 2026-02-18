@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= base_url('bingo.css') ?>">
+  <link rel="stylesheet" href="/bingo.css">
 </head>
 <body>
   <main class="page">
@@ -93,8 +93,8 @@
   </main>
 
   <script>
-    window.BINGO_BASE = "<?= rtrim(base_url(), '/') ?>";
+    window.BINGO_BASE = window.location.origin;
   </script>
-  <script src="<?= base_url('bingo.js') ?>"></script>
+  <script src="/bingo.js"></script>
 </body>
 </html>
