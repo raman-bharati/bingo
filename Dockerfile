@@ -22,10 +22,8 @@ RUN composer install --optimize-autoloader --no-scripts --no-interaction --no-de
 
 RUN chown -R www-data:www-data /var/www/html
 
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+# Configure Apache to serve from public directory
+RUN echo '<VirtualHost *:80>\n    DocumentRoot /var/www/html/public\n    <Directory /var/www/html/public>\n        AllowOverride All\n        Require all granted\n        RewriteEngine On\n        RewriteCond %{REQUEST_FILENAME} !-f\n        RewriteCond %{REQUEST_FILENAME} !-d\n        RewriteRule ^ index.php [QSA,L]\n    </Directory>\n</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 EXPOSE 80
 
