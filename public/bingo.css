@@ -23,7 +23,7 @@ body {
 .page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px 72px;
+  padding: clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px) clamp(36px, 8vw, 72px);
 }
 
 .hero {
@@ -160,40 +160,41 @@ button:disabled {
 
 .board {
   display: grid;
-  grid-template-columns: repeat(var(--board-size, 5), minmax(44px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(var(--board-size, 5), minmax(clamp(32px, 7vw, 60px), 1fr));
+  gap: clamp(4px, 1.5vw, 8px);
   background: rgba(255, 255, 255, 0.7);
-  padding: 12px;
+  padding: clamp(8px, 2vw, 16px);
   border-radius: 16px;
   border: 1px solid rgba(31, 26, 20, 0.1);
 }
 
 .board[data-size="7"] {
-  gap: 6px;
+  gap: clamp(3px, 1.2vw, 6px);
 }
 
 .board[data-size="9"] {
-  gap: 5px;
+  gap: clamp(3px, 1vw, 5px);
 }
 
 .board[data-size="7"] .board-cell,
 .board[data-size="9"] .board-cell {
-  min-height: 44px;
-  font-size: 0.9rem;
+  min-height: clamp(32px, 7vw, 44px);
+  font-size: 0.85rem;
 }
 
 .board-cell {
   background: #fff;
   border-radius: 12px;
-  padding: 12px 4px;
+  padding: clamp(6px, 1vw, 12px) clamp(2px, 0.5vw, 4px);
   text-align: center;
   font-weight: 600;
   box-shadow: 0 10px 20px var(--shadow);
   border: 2px solid transparent;
-  min-height: 50px;
+  min-height: clamp(40px, 8vw, 60px);
   display: grid;
   place-items: center;
   position: relative;
+  font-size: clamp(0.75rem, 2vw, 1rem);
 }
 
 .board-cell.selected {
@@ -218,28 +219,30 @@ button:disabled {
 .picker {
   background: #fff7ec;
   border-radius: 16px;
-  padding: 12px;
+  padding: clamp(8px, 2vw, 12px);
   border: 1px solid rgba(31, 26, 20, 0.1);
 }
 
 .picker-title {
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: clamp(6px, 1vw, 8px);
+  font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .picker-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(32px, 6vw, 42px), 1fr));
+  gap: clamp(4px, 1vw, 6px);
   max-height: 220px;
   overflow: auto;
 }
 
 .picker-button {
   border-radius: 10px;
-  padding: 6px;
+  padding: clamp(4px, 1vw, 8px);
   text-align: center;
   font-weight: 600;
+  font-size: clamp(0.75rem, 1.5vw, 0.9rem);
   border: 1px solid rgba(31, 26, 20, 0.15);
   background: #fff;
   cursor: pointer;
@@ -295,8 +298,8 @@ button:disabled {
 
 .call-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(32px, 6vw, 42px), 1fr));
+  gap: clamp(4px, 1vw, 6px);
   max-height: 220px;
   overflow: auto;
 }
@@ -304,9 +307,10 @@ button:disabled {
 .call-button {
   background: #fff;
   border-radius: 10px;
-  padding: 6px;
+  padding: clamp(4px, 1vw, 8px);
   text-align: center;
   font-weight: 600;
+  font-size: clamp(0.75rem, 1.5vw, 0.9rem);
   border: 1px solid rgba(31, 26, 20, 0.15);
   cursor: pointer;
 }
@@ -375,20 +379,22 @@ button:disabled {
   background: var(--accent);
   pointer-events: none;
   z-index: 5;
+  transform-origin: top center;
 }
 
 .line-overlay.horizontal {
-  left: 0;
-  right: 0;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 100%);
+  box-shadow: 0 1px 3px rgba(242, 107, 79, 0.4);
 }
 
 .line-overlay.vertical {
-  top: 0;
-  bottom: 0;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent) 100%);
+  box-shadow: 1px 0 3px rgba(242, 107, 79, 0.4);
 }
 
 .line-overlay.diagonal {
-  background: var(--accent);
+  background: linear-gradient(45deg, var(--accent) 0%, var(--accent) 100%);
+  box-shadow: 1px 1px 3px rgba(242, 107, 79, 0.4);
 }
 
 @keyframes lineComplete {
@@ -484,21 +490,126 @@ button:disabled {
 }
 
 @media (max-width: 900px) {
+  .board-section {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
   .board-header {
     flex-direction: column;
     align-items: flex-start;
   }
 
+  .board-actions {
+    width: 100%;
+  }
+
+  .board-actions button {
+    flex: 1;
+  }
+
   .modal-content {
-    padding: 32px;
-    margin: 20px;
+    padding: 24px;
+    margin: 16px;
   }
 
   .celebration h2 {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
 
   .celebration p {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 12px 8px 48px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: clamp(1.8rem, 5vw, 2.4rem);
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .board-wrap,
+  .status-wrap,
+  .leaderboard-wrap {
+    gap: 12px;
+  }
+
+  .board {
+    padding: clamp(6px, 1.5vw, 12px);
+  }
+
+  .status-card,
+  .leaderboard-card {
+    padding: 12px;
+  }
+
+  .status-title,
+  .leaderboard-title {
+    font-size: 0.95rem;
+  }
+
+  .status-value {
+    font-size: 1.8rem;
+  }
+
+  .picker {
+    gap: 6px;
+  }
+
+  .picker-grid {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(28px, 5vw, 40px), 1fr));
+    gap: clamp(4px, 1vw, 6px);
+  }
+
+  .picker-button {
+    font-size: 0.75rem;
+    padding: clamp(6px, 1vw, 8px);
+  }
+
+  .call-grid {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(28px, 5vw, 40px), 1fr));
+    gap: clamp(4px, 1vw, 6px);
+  }
+
+  .call-button {
+    font-size: 0.75rem;
+    padding: clamp(6px, 1vw, 8px);
+  }
+
+  .modal-content {
+    padding: 20px;
+    margin: 16px;
+    max-width: 90vw;
+  }
+
+  .celebration h2 {
     font-size: 1.5rem;
+  }
+
+  .celebration p {
+    font-size: 1.1rem;
+  }
+
+  button.primary,
+  button.ghost {
+    padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px);
+    font-size: 0.9rem;
+  }
+
+  .board-cell.selected {
+    box-shadow: 0 0 0 1px rgba(242, 107, 79, 0.35);
   }
 }

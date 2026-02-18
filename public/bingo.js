@@ -124,8 +124,19 @@ function drawCompletedLines() {
   existingLines.forEach(line => line.remove());
   
   const board = elements.board;
+  const boardStyle = window.getComputedStyle(board);
+  const padding = parseFloat(boardStyle.padding);
   const boardRect = board.getBoundingClientRect();
-  const cellSize = boardRect.width / state.boardSize;
+  const gap = parseFloat(boardStyle.gap) || 8;
+  
+  // Calculate actual content width/height (excluding padding)
+  const contentWidth = boardRect.width - (padding * 2);
+  const contentHeight = boardRect.height - (padding * 2);
+  
+  // Calculate cell size based on content area
+  const totalGaps = (state.boardSize - 1) * gap;
+  const cellSize = (contentWidth - totalGaps) / state.boardSize;
+  
   const lines = getCompletedLines();
   
   lines.forEach(line => {
@@ -133,39 +144,41 @@ function drawCompletedLines() {
     overlay.className = "line-overlay";
     
     if (line.type === "row") {
-      // Horizontal line
+      // Horizontal line - position at the vertical center of the row
       overlay.classList.add("horizontal");
-      overlay.style.top = (line.index * cellSize + cellSize / 2) + "px";
-      overlay.style.width = "100%";
+      const rowCenterY = padding + (line.index * (cellSize + gap)) + (cellSize / 2);
+      overlay.style.top = rowCenterY + "px";
+      overlay.style.left = padding + "px";
+      overlay.style.width = contentWidth + "px";
       overlay.style.height = "3px";
     } else if (line.type === "col") {
-      // Vertical line
+      // Vertical line - position at the horizontal center of the column
       overlay.classList.add("vertical");
-      overlay.style.left = (line.index * cellSize + cellSize / 2) + "px";
-      overlay.style.height = "100%";
+      const colCenterX = padding + (line.index * (cellSize + gap)) + (cellSize / 2);
+      overlay.style.left = colCenterX + "px";
+      overlay.style.top = padding + "px";
       overlay.style.width = "3px";
+      overlay.style.height = contentHeight + "px";
     } else if (line.type === "diag" && line.index === 0) {
       // Top-left to bottom-right diagonal
-      const size = state.boardSize * cellSize;
-      const lineLength = Math.sqrt(2) * size;
+      const lineLength = Math.sqrt(contentWidth * contentWidth + contentHeight * contentHeight) * 1.1;
       overlay.classList.add("diagonal", "tlbr");
       overlay.style.width = lineLength + "px";
       overlay.style.height = "3px";
-      overlay.style.top = "0";
-      overlay.style.left = "0";
+      overlay.style.left = padding + "px";
+      overlay.style.top = padding + "px";
       overlay.style.transformOrigin = "left top";
-      overlay.style.transform = "rotate(45deg)";
+      overlay.style.transform = `rotate(${Math.atan2(contentHeight, contentWidth) * 180 / Math.PI}deg)`;
     } else if (line.type === "diag" && line.index === 1) {
       // Top-right to bottom-left diagonal
-      const size = state.boardSize * cellSize;
-      const lineLength = Math.sqrt(2) * size;
+      const lineLength = Math.sqrt(contentWidth * contentWidth + contentHeight * contentHeight) * 1.1;
       overlay.classList.add("diagonal", "bltr");
       overlay.style.width = lineLength + "px";
       overlay.style.height = "3px";
-      overlay.style.top = "0";
-      overlay.style.right = "0";
+      overlay.style.right = padding + "px";
+      overlay.style.top = padding + "px";
       overlay.style.transformOrigin = "right top";
-      overlay.style.transform = "rotate(-45deg)";
+      overlay.style.transform = `rotate(${-Math.atan2(contentHeight, contentWidth) * 180 / Math.PI}deg)`;
     }
     
     board.appendChild(overlay);
@@ -426,7 +439,17 @@ function handleRoomAction(action) {
     })
     .then((data) => {
       if (!data.ok) {
-        const errorMsg = data.error || "Unknown error";
+        let errorMsg = data.error || "Unknown error";
+        // Add helpful suggestions for common errors
+        if (errorMsg === "Room already exists." && action === "create") {
+          errorMsg += "\n\nTry a different room code.";
+        } else if (errorMsg === "Room not found." && action === "join") {
+          errorMsg += "\n\nAsk the creator for the correct room code.";
+        } else if (errorMsg === "Game already started.") {
+          errorMsg += "\n\nYou cannot join or change your board once the game has started.";
+        } else if (errorMsg === "Board size does not match the room.") {
+          errorMsg += "\n\nSelect the same board size as the room.";
+        }
         alert(`⚠️ ${action === 'create' ? 'Create Room' : 'Join Room'} Error:\n\n${errorMsg}`);
         console.error(`Room ${action} error:`, data);
         return;
@@ -470,7 +493,15 @@ function lockBoard() {
     })
     .then((data) => {
       if (!data.ok) {
-        const errorMsg = data.error || "Unknown error";
+        let errorMsg = data.error || "Unknown error";
+        // Add helpful suggestions
+        if (errorMsg === "Game already started.") {
+          errorMsg += "\n\nYou cannot change your board after the game has started.";
+        } else if (errorMsg === "Room not found.") {
+          errorMsg += "\n\nThe room no longer exists.";
+        } else if (errorMsg === "Player not found.") {
+          errorMsg += "\n\nYou are not in this room.";
+        }
         alert(`⚠️ Lock Board Error:\n\n${errorMsg}`);
         console.error("Lock board error:", data);
         return;
@@ -657,7 +688,7 @@ function callNumber(number) {
     return;
   }
   if (!state.started) {
-    alert("Start the game first.");
+    alert("⚠️ Start the game first.");
     return;
   }
   fetch(`${BASE_URL}/bingo/room/call`, {
@@ -669,15 +700,35 @@ function callNumber(number) {
       number,
     }),
   })
-    .then((res) => res.json())
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return res.json();
+    })
     .then((data) => {
       if (!data.ok) {
-        alert(data.error || "Call failed.");
+        let errorMsg = data.error || "Unknown error";
+        // Add helpful suggestions
+        if (errorMsg === "Not your turn.") {
+          errorMsg += "\n\nWait for your turn to call.";
+        } else if (errorMsg === "Number already called.") {
+          errorMsg += "\n\nPick a different number.";
+        } else if (errorMsg === "Game is over.") {
+          errorMsg += "\n\nStart a new game.";
+        } else if (errorMsg === "Waiting for all players to be ready.") {
+          errorMsg += "\n\nWait for all players to lock their boards.";
+        }
+        alert(`⚠️ Error:\n\n${errorMsg}`);
+        console.error("Call number error:", data);
         return;
       }
       applyState(data.state);
     })
-    .catch(() => alert("Call failed."));
+    .catch((err) => {
+      alert(`⚠️ Call failed:\n\n${err.message}`);
+      console.error("Call error:", err);
+    });
 }
 
 function startNextGame() {
