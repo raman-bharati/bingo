@@ -80,7 +80,7 @@
           <div class="status-meta" id="callMeta">Waiting for first call.</div>
         </div>
         <div class="status-card">
-          <div class="status-title">Players</div>
+          <div class="status-title">Players & Wins</div>
           <div id="playerList" class="players"></div>
         </div>
         <div class="status-card">
@@ -91,6 +91,17 @@
       </div>
     </section>
   </main>
+
+  <div id="winnerModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="celebration">
+        <div class="confetti"></div>
+        <h2 id="winnerName"></h2>
+        <p>🎉 WINS! 🎉</p>
+        <button id="closeWinnerModal" class="primary">Continue</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     window.BINGO_BASE = window.location.origin;

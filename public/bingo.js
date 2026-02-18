@@ -18,6 +18,7 @@ const state = {
   winnerId: null,
   lastCall: null,
   started: false,
+  completedLines: [],
   pollTimer: null,
   lastTapAt: 0,
   lastTapCell: null,
@@ -43,6 +44,8 @@ const elements = {
   playerList: document.getElementById("playerList"),
   callGrid: document.getElementById("callGrid"),
   newGame: document.getElementById("newGame"),
+  winnerModal: document.getElementById("winnerModal"),
+  winnerName: document.getElementById("winnerName"),
 };
 
 const storage = {
@@ -65,6 +68,7 @@ function init() {
   elements.clearBoard.addEventListener("click", clearBoard);
   elements.lockBoard.addEventListener("click", lockBoard);
   elements.newGame.addEventListener("click", handleGameButton);
+  document.getElementById("closeWinnerModal").addEventListener("click", closeWinnerModal);
   document.addEventListener("keydown", handleKeyInput);
 }
 
@@ -85,6 +89,11 @@ function renderBoard() {
       }
       if (isMarked(cell)) {
         div.classList.add("marked");
+      }
+      const lineInfo = isInCompletedLine(r, c);
+      if (lineInfo) {
+        div.classList.add("in-line");
+        div.dataset.lineType = lineInfo;
       }
       if (state.selectedCell && state.selectedCell[0] === r && state.selectedCell[1] === c && state.inputBuffer) {
         div.textContent = state.inputBuffer;
@@ -440,6 +449,9 @@ function renderStatus() {
     elements.turnStatus.textContent = winner ? `${winner.name} wins!` : "Game over.";
     elements.newGame.textContent = "Start next game";
     elements.newGame.disabled = false;
+    if (winner && !elements.winnerModal.dataset.shown) {
+      showWinnerCelebration(winner.name);
+    }
   } else if (!allReady()) {
     elements.turnStatus.textContent = "Waiting for all players to be ready.";
     elements.newGame.textContent = "Start game";
@@ -476,7 +488,8 @@ function renderStatus() {
     const readyMarker = player.ready ? "ready" : "not ready";
     label.textContent = `${player.name}${turnMarker}`;
     const meta = document.createElement("span");
-    meta.textContent = `${player.lines} lines • ${readyMarker}`;
+    const winsText = player.wins > 0 ? ` • ${player.wins} win${player.wins !== 1 ? "s" : ""}` : "";
+    meta.textContent = `${readyMarker}${winsText}`;
     row.appendChild(label);
     row.appendChild(meta);
     elements.playerList.appendChild(row);
@@ -622,4 +635,96 @@ function shuffleArray(array) {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+function getCompletedLines() {
+  const lines = [];
+  const size = state.boardSize;
+  const called = new Set(state.calledNumbers);
+
+  for (let r = 0; r < size; r++) {
+    let rowComplete = true;
+    for (let c = 0; c < size; c++) {
+      if (!called.has(state.board[r][c])) {
+        rowComplete = false;
+        break;
+      }
+    }
+    if (rowComplete) {
+      lines.push({ type: "row", index: r });
+    }
+  }
+
+  for (let c = 0; c < size; c++) {
+    let colComplete = true;
+    for (let r = 0; r < size; r++) {
+      if (!called.has(state.board[r][c])) {
+        colComplete = false;
+        break;
+      }
+    }
+    if (colComplete) {
+      lines.push({ type: "col", index: c });
+    }
+  }
+
+  let diag1Complete = true;
+  for (let i = 0; i < size; i++) {
+    if (!called.has(state.board[i][i])) {
+      diag1Complete = false;
+      break;
+    }
+  }
+  if (diag1Complete) {
+    lines.push({ type: "diag", index: 0 });
+  }
+
+  let diag2Complete = true;
+  for (let i = 0; i < size; i++) {
+    if (!called.has(state.board[i][size - 1 - i])) {
+      diag2Complete = false;
+      break;
+    }
+  }
+  if (diag2Complete) {
+    lines.push({ type: "diag", index: 1 });
+  }
+
+  return lines;
+}
+
+function isInCompletedLine(r, c) {
+  const lines = getCompletedLines();
+  for (const line of lines) {
+    if (line.type === "row" && line.index === r) return "row";
+    if (line.type === "col" && line.index === c) return "col";
+    if (line.type === "diag" && line.index === 0 && r === c) return "diag";
+    if (line.type === "diag" && line.index === 1 && r + c === state.boardSize - 1) return "diag";
+  }
+  return null;
+}
+
+function showWinnerCelebration(name) {
+  elements.winnerName.textContent = name;
+  elements.winnerModal.dataset.shown = "true";
+  elements.winnerModal.style.display = "flex";
+  playConfetti();
+}
+
+function closeWinnerModal() {
+  elements.winnerModal.style.display = "none";
+  delete elements.winnerModal.dataset.shown;
+}
+
+function playConfetti() {
+  const confetti = document.querySelector(".confetti");
+  if (!confetti) return;
+  confetti.innerHTML = "";
+  for (let i = 0; i < 50; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    piece.style.left = Math.random() * 100 + "%";
+    piece.style.animationDelay = Math.random() * 0.5 + "s";
+    confetti.appendChild(piece);
+  }
 }

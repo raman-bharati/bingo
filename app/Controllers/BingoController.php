@@ -47,6 +47,7 @@ class BingoController extends BaseController
             'board' => $normalizedBoard,
             'lines' => 0,
             'ready' => $normalizedBoard !== null,
+            'wins' => 0,
         ];
 
         $room = [
@@ -60,6 +61,7 @@ class BingoController extends BaseController
             'winnerId' => null,
             'lastCall' => null,
             'started' => false,
+            'roomWins' => [],
         ];
 
         $this->writeRoom($roomCode, $room);
@@ -109,6 +111,7 @@ class BingoController extends BaseController
             'board' => $normalizedBoard,
             'lines' => 0,
             'ready' => $normalizedBoard !== null,
+            'wins' => 0,
         ];
 
         $room['players'][] = $player;
@@ -568,8 +571,9 @@ class BingoController extends BaseController
             $players[] = [
                 'id' => $player['id'],
                 'name' => $player['name'],
-                'lines' => $player['lines'] ?? 0,
+                'lines' => ($player['id'] === $playerId) ? ($player['lines'] ?? 0) : 0,
                 'ready' => $player['ready'] ?? false,
+                'wins' => $player['wins'] ?? 0,
             ];
         }
 
