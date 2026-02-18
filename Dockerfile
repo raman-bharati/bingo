@@ -27,6 +27,9 @@ RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /e
     sed -i 's|<Directory /var/www/html>|<Directory /var/www/html/public>|g' /etc/apache2/sites-available/000-default.conf && \
     sed -i 's|AllowOverride None|AllowOverride All|g' /etc/apache2/sites-available/000-default.conf
 
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 80
 
-CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
