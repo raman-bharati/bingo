@@ -387,7 +387,7 @@ function handleRoomAction(action) {
   const name = elements.playerName.value.trim();
   const roomCode = elements.roomCode.value.trim();
   if (!name || !roomCode) {
-    alert("Enter your name and room code.");
+    alert("⚠️ Error: Enter your name and room code.");
     return;
   }
   state.playerName = name;
@@ -406,23 +406,39 @@ function handleRoomAction(action) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
-    .then((res) => res.json())
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      return res.json();
+    })
     .then((data) => {
       if (!data.ok) {
-        alert(data.error || "Room action failed.");
+        const errorMsg = data.error || "Unknown error";
+        alert(`⚠️ ${action === 'create' ? 'Create Room' : 'Join Room'} Error:\n\n${errorMsg}`);
+        console.error(`Room ${action} error:`, data);
         return;
       }
       state.playerId = data.playerId;
+      state.roomCode = roomCode;
       localStorage.setItem("bingo.playerId", state.playerId);
       applyState(data.state);
       startPolling();
     })
-    .catch(() => alert("Room action failed."));
+    .catch((err) => {
+      alert(`⚠️ ${action === 'create' ? 'Create Room' : 'Join Room'} Failed:\n\n${err.message}\n\nCheck console for details.`);
+      console.error(`Room ${action} exception:`, err);
+    });
 }
 
 function lockBoard() {
   if (!state.playerId || !state.roomCode) {
-    alert("Join a room first.");
+    alert("⚠️ Error: Join a room first.");
+    return;
+  }
+  const boardReady = state.board.flat().every((cell) => Number.isInteger(cell));
+  if (!boardReady) {
+    alert("⚠️ Error: Fill all cells on your board before locking.");
     return;
   }
   fetch(`${BASE_URL}/bingo/room/board`, {
@@ -434,15 +450,25 @@ function lockBoard() {
       board: state.board,
     }),
   })
-    .then((res) => res.json())
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      return res.json();
+    })
     .then((data) => {
       if (!data.ok) {
-        alert(data.error || "Board update failed.");
+        const errorMsg = data.error || "Unknown error";
+        alert(`⚠️ Lock Board Error:\n\n${errorMsg}`);
+        console.error("Lock board error:", data);
         return;
       }
       applyState(data.state);
     })
-    .catch(() => alert("Board update failed."));
+    .catch((err) => {
+      alert(`⚠️ Lock Board Failed:\n\n${err.message}\n\nCheck console for details.`);
+      console.error("Lock board exception:", err);
+    });
 }
 
 function startPolling() {
