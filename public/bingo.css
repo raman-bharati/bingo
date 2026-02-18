@@ -192,6 +192,7 @@ button:disabled {
   min-height: 50px;
   display: grid;
   place-items: center;
+  position: relative;
 }
 
 .board-cell.selected {
@@ -202,6 +203,15 @@ button:disabled {
 .board-cell.marked {
   background: #f7caa8;
   border-color: var(--accent-dark);
+}
+
+.board-cell.marked::after {
+  content: "";
+  position: absolute;
+  width: 70%;
+  height: 70%;
+  border: 3px solid var(--accent-dark);
+  border-radius: 999px;
 }
 
 .picker {

@@ -13,6 +13,7 @@ $routes->post('bingo/room/join', 'BingoController::joinRoom');
 $routes->post('bingo/room/board', 'BingoController::updateBoard');
 $routes->get('bingo/room/state', 'BingoController::getState');
 $routes->post('bingo/room/call', 'BingoController::callNumber');
+$routes->post('bingo/room/start', 'BingoController::startGame');
 $routes->post('bingo/room/new', 'BingoController::newGame');
 
 $routes->get('esewa', 'EsewaController::index');

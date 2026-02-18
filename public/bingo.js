@@ -17,6 +17,7 @@ const state = {
   players: [],
   winnerId: null,
   lastCall: null,
+  started: false,
   pollTimer: null,
 };
 
@@ -61,7 +62,7 @@ function init() {
   elements.autoFill.addEventListener("click", autoFillBoard);
   elements.clearBoard.addEventListener("click", clearBoard);
   elements.lockBoard.addEventListener("click", lockBoard);
-  elements.newGame.addEventListener("click", startNextGame);
+  elements.newGame.addEventListener("click", handleGameButton);
   document.addEventListener("keydown", handleKeyInput);
 }
 
@@ -88,7 +89,8 @@ function renderBoard() {
       } else {
         div.textContent = cell ? String(cell) : "";
       }
-      div.addEventListener("click", () => selectCell(r, c));
+      div.addEventListener("click", () => handleCellClick(r, c));
+      div.addEventListener("dblclick", () => handleCellCall(r, c));
       elements.board.appendChild(div);
     });
   });
@@ -124,7 +126,29 @@ function renderCallGrid() {
   }
 }
 
+function handleCellClick(row, col) {
+  if (state.started) {
+    handleCellCall(row, col);
+    return;
+  }
+  selectCell(row, col);
+}
+
+function handleCellCall(row, col) {
+  if (!state.started || !state.roomCode || !state.playerId) {
+    return;
+  }
+  const number = state.board[row][col];
+  if (!Number.isInteger(number) || state.calledNumbers.includes(number)) {
+    return;
+  }
+  callNumber(number);
+}
+
 function selectCell(row, col) {
+  if (state.started || state.calledNumbers.length > 0) {
+    return;
+  }
   state.selectedCell = [row, col];
   state.inputBuffer = "";
   renderBoard();
@@ -138,6 +162,7 @@ function placeNumber(number) {
     return;
   }
   if (boardHasNumber(number, state.selectedCell)) {
+    alert("Each number must be unique.");
     return;
   }
   const [row, col] = state.selectedCell;
@@ -260,6 +285,12 @@ function commitBuffer() {
     renderBoard();
     return;
   }
+  if (boardHasNumber(value, state.selectedCell)) {
+    state.inputBuffer = "";
+    renderBoard();
+    alert("Each number must be unique.");
+    return;
+  }
   placeNumber(value);
 }
 
@@ -352,6 +383,7 @@ function applyState(nextState) {
   state.startIndex = nextState.startIndex ?? 0;
   state.winnerId = nextState.winnerId || null;
   state.lastCall = nextState.lastCall || null;
+  state.started = !!nextState.started;
 
   if (nextState.boardSize && nextState.boardSize !== state.boardSize) {
     setBoardSize(nextState.boardSize, true);
@@ -380,18 +412,25 @@ function renderStatus() {
   }
 
   const playerIndex = state.players.findIndex((p) => p.id === state.playerId);
-  const isMyTurn = playerIndex === state.turnIndex;
+  const isMyTurn = state.started && playerIndex === state.turnIndex;
   const currentPlayer = state.players[state.turnIndex];
 
   if (state.winnerId) {
     const winner = state.players.find((p) => p.id === state.winnerId);
     elements.turnStatus.textContent = winner ? `${winner.name} wins!` : "Game over.";
+    elements.newGame.textContent = "Start next game";
     elements.newGame.disabled = false;
   } else if (!allReady()) {
     elements.turnStatus.textContent = "Waiting for all players to be ready.";
+    elements.newGame.textContent = "Start game";
     elements.newGame.disabled = true;
+  } else if (!state.started) {
+    elements.turnStatus.textContent = "Ready to start the game.";
+    elements.newGame.textContent = "Start game";
+    elements.newGame.disabled = false;
   } else if (currentPlayer) {
     elements.turnStatus.textContent = isMyTurn ? "Your turn to call." : `${currentPlayer.name} is calling.`;
+    elements.newGame.textContent = "Start next game";
     elements.newGame.disabled = true;
   }
 
@@ -427,13 +466,17 @@ function renderStatus() {
   callButtons.forEach((button) => {
     const number = Number(button.textContent);
     const alreadyCalled = state.calledNumbers.includes(number);
-    button.disabled = alreadyCalled || !isMyTurn || !allReady() || !!state.winnerId;
+    button.disabled = alreadyCalled || !isMyTurn || !allReady() || !state.started || !!state.winnerId;
     button.classList.toggle("called", alreadyCalled);
   });
 }
 
 function callNumber(number) {
   if (!state.roomCode || !state.playerId) {
+    return;
+  }
+  if (!state.started) {
+    alert("Start the game first.");
     return;
   }
   fetch(`${BASE_URL}/bingo/room/call`, {
@@ -477,6 +520,42 @@ function startNextGame() {
       applyState(data.state);
     })
     .catch(() => alert("New game failed."));
+}
+
+function startGame() {
+  if (!state.roomCode || !state.playerId) {
+    return;
+  }
+  fetch(`${BASE_URL}/bingo/room/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      roomCode: state.roomCode,
+      playerId: state.playerId,
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) {
+        alert(data.error || "Start game failed.");
+        return;
+      }
+      applyState(data.state);
+    })
+    .catch(() => alert("Start game failed."));
+}
+
+function handleGameButton() {
+  if (!allReady()) {
+    return;
+  }
+  if (!state.started) {
+    startGame();
+    return;
+  }
+  if (state.winnerId) {
+    startNextGame();
+  }
 }
 
 function buildLineLetters(lines) {

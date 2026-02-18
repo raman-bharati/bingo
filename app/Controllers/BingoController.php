@@ -59,6 +59,7 @@ class BingoController extends BaseController
             'startIndex' => 0,
             'winnerId' => null,
             'lastCall' => null,
+            'started' => false,
         ];
 
         $this->writeRoom($roomCode, $room);
@@ -93,6 +94,10 @@ class BingoController extends BaseController
         }
 
         if (!empty($room['calledNumbers'])) {
+            return $this->fail('Game already started.', 409);
+        }
+
+        if (!empty($room['started'])) {
             return $this->fail('Game already started.', 409);
         }
 
@@ -147,6 +152,10 @@ class BingoController extends BaseController
             return $this->fail('Game already started.', 409);
         }
 
+        if (!empty($room['started'])) {
+            return $this->fail('Game already started.', 409);
+        }
+
         $room['players'][$playerIndex]['board'] = $normalizedBoard;
         $room['players'][$playerIndex]['ready'] = true;
         $this->writeRoom($roomCode, $room);
@@ -195,6 +204,10 @@ class BingoController extends BaseController
 
         if ($room['winnerId'] !== null) {
             return $this->fail('Game is over.', 409);
+        }
+
+        if (empty($room['started'])) {
+            return $this->fail('Game has not started.', 409);
         }
 
         if (!$this->allPlayersReady($room)) {
@@ -270,6 +283,7 @@ class BingoController extends BaseController
         $room['calledNumbers'] = [];
         $room['winnerId'] = null;
         $room['lastCall'] = null;
+        $room['started'] = false;
 
         foreach ($room['players'] as $idx => $player) {
             $room['players'][$idx]['lines'] = 0;
@@ -277,6 +291,48 @@ class BingoController extends BaseController
 
         $room['startIndex'] = $this->nextStartIndex($room);
         $room['turnIndex'] = $room['startIndex'];
+        $this->writeRoom($roomCode, $room);
+
+        return $this->respond([
+            'ok' => true,
+            'state' => $this->buildState($room, $playerId),
+        ]);
+    }
+
+    public function startGame(): ResponseInterface
+    {
+        $payload = $this->request->getJSON(true) ?? [];
+        $roomCode = $this->normalizeRoomCode($payload['roomCode'] ?? '');
+        $playerId = (string)($payload['playerId'] ?? '');
+
+        if ($roomCode === '' || $playerId === '') {
+            return $this->fail('Room code and player ID are required.', 400);
+        }
+
+        $room = $this->readRoom($roomCode);
+        if ($room === null) {
+            return $this->fail('Room not found.', 404);
+        }
+
+        if (!empty($room['started'])) {
+            return $this->fail('Game already started.', 409);
+        }
+
+        if (!empty($room['calledNumbers'])) {
+            return $this->fail('Game already started.', 409);
+        }
+
+        if (!$this->allPlayersReady($room)) {
+            return $this->fail('Waiting for all players to be ready.', 409);
+        }
+
+        $playerIndex = $this->findPlayerIndex($room, $playerId);
+        if ($playerIndex === -1) {
+            return $this->fail('Player not found.', 404);
+        }
+
+        $room['started'] = true;
+        $room['turnIndex'] = $room['startIndex'] ?? 0;
         $this->writeRoom($roomCode, $room);
 
         return $this->respond([
@@ -523,6 +579,8 @@ class BingoController extends BaseController
             $playerBoard = $room['players'][$playerIndex]['board'] ?? null;
         }
 
+        $started = !empty($room['started']) || !empty($room['calledNumbers']);
+
         return [
             'roomCode' => $room['roomCode'],
             'boardSize' => (int)($room['boardSize'] ?? 5),
@@ -534,6 +592,7 @@ class BingoController extends BaseController
             'winnerId' => $room['winnerId'],
             'lastCall' => $room['lastCall'],
             'board' => $playerBoard,
+            'started' => $started,
         ];
     }
 

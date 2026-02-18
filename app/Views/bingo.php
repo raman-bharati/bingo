@@ -86,7 +86,7 @@
         <div class="status-card">
           <div class="status-title">Call a number</div>
           <div class="call-grid" id="callGrid"></div>
-          <button id="newGame" class="ghost full" disabled>Start next game</button>
+          <button id="newGame" class="ghost full" disabled>Start game</button>
         </div>
       </div>
     </section>
