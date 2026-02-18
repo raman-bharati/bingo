@@ -1,22 +1,30 @@
-FROM php:8.2-cli
+FROM php:8.2-apache
+
+RUN a2enmod rewrite
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     libicu-dev \
     libpq-dev \
-    git \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install intl pdo pdo_mysql \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-configure intl && docker-php-ext-install intl pdo pdo_mysql
-
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app
+WORKDIR /var/www/html
 COPY . .
 
 RUN composer install --optimize-autoloader --no-scripts --no-interaction --no-dev
 
-EXPOSE 8080
+RUN chown -R www-data:www-data /var/www/html
 
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+EXPOSE 80
+
+CMD ["apache2-foreground"]
