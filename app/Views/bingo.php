@@ -95,6 +95,16 @@
           <div id="leaderboard" class="leaderboard-list"></div>
           <button id="newGame" class="ghost full" disabled>Start game</button>
         </div>
+        <div class="howto-card">
+          <div class="howto-title">📖 How to Play</div>
+          <ul class="howto-list">
+            <li>Fill your board with unique numbers (1-25 for 5×5)</li>
+            <li>Lock your board when ready</li>
+            <li>Take turns calling numbers by double-clicking them</li>
+            <li>Complete 5 lines (rows/columns/diagonals) to win!</li>
+            <li>Completed lines turn green</li>
+          </ul>
+        </div>
       </div>
     </section>
 

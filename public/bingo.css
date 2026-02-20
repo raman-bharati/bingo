@@ -374,7 +374,7 @@ button:disabled {
 .leaderboard-list {
   display: grid;
   gap: 8px;
-  max-height: 200px;
+  max-height: 120px;
   overflow-y: auto;
   margin-bottom: 12px;
 }
@@ -409,6 +409,45 @@ button:disabled {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--accent);
+}
+
+.howto-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(31, 26, 20, 0.1);
+  box-shadow: 0 10px 24px var(--shadow);
+}
+
+.howto-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+.howto-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.howto-list li {
+  padding: 8px 12px;
+  background: #fef1e0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: flex-start;
+}
+
+.howto-list li::before {
+  content: "▸";
+  color: var(--accent);
+  font-weight: bold;
+  margin-right: 8px;
+  flex-shrink: 0;
 }
 
 
