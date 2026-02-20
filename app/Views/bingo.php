@@ -69,7 +69,7 @@
       <div>
         <div class="eyebrow">Multiplayer Bingo</div>
         <h1>Bingo in real time.</h1>
-        <p class="lede">Build your 5x5 board, take turns calling numbers, and claim five lines first.</p>
+        <p class="lede">Build your board, take turns calling numbers, and claim five lines first.</p>
       </div>
       <div class="panel" id="roomPanel">
         <div class="panel-title">Join a room</div>
@@ -153,8 +153,8 @@
           <ul class="howto-list">
             <li>Fill your board with unique numbers (1-25 for 5×5)</li>
             <li>Lock your board when ready</li>
-            <li>Take turns calling numbers by double-clicking them</li>
-            <li>Complete 5 lines (rows/columns/diagonals) to win!</li>
+            <li>Take turns calling numbers by clicking them</li>
+            <li>Complete 5 lines first (rows/columns/diagonals) to win!</li>
             <li>Completed lines turn green</li>
           </ul>
         </div>
