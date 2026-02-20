@@ -100,6 +100,12 @@
         </div>
       </div>
     </section>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <p>&copy; 2026 Made by Raman. All rights reserved.</p>
+      </div>
+    </footer>
   </main>
 
   <div id="winnerModal" class="modal" style="display: none;">
