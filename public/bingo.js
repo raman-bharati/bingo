@@ -732,7 +732,7 @@ function startNextGame() {
       state.board = createEmptyBoard(state.boardSize);
       state.selectedCell = null;
       state.inputBuffer = "";
-      state.boardDirty = true;
+      state.boardDirty = false;
       // Reset modal for new game
       if (elements.winnerModal) {
         delete elements.winnerModal.dataset.shown;

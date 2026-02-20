@@ -242,11 +242,19 @@ class BingoController extends BaseController
             'at' => time(),
         ];
 
+        $winnerBefore = $room['winnerId'];
         foreach ($room['players'] as $idx => $player) {
             $board = $player['board'] ?? null;
             $room['players'][$idx]['lines'] = $this->countLines($board, $room['calledNumbers'], (int)($room['boardSize'] ?? 5));
             if ($room['players'][$idx]['lines'] >= 5 && $room['winnerId'] === null) {
                 $room['winnerId'] = $player['id'];
+            }
+        }
+
+        if ($winnerBefore === null && $room['winnerId'] !== null) {
+            $winnerIndex = $this->findPlayerIndex($room, (string)$room['winnerId']);
+            if ($winnerIndex !== -1) {
+                $room['players'][$winnerIndex]['wins'] = (int)($room['players'][$winnerIndex]['wins'] ?? 0) + 1;
             }
         }
 
@@ -290,6 +298,8 @@ class BingoController extends BaseController
 
         foreach ($room['players'] as $idx => $player) {
             $room['players'][$idx]['lines'] = 0;
+            $room['players'][$idx]['ready'] = false;
+            $room['players'][$idx]['board'] = null;
         }
 
         $room['startIndex'] = $this->nextStartIndex($room);
