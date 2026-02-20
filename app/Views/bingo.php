@@ -73,6 +73,10 @@
           <div class="status-meta" id="turnStatus">Waiting...</div>
         </div>
         <div class="status-card">
+          <div class="status-title">Players</div>
+          <div id="playerList" class="players"></div>
+        </div>
+        <div class="status-card">
           <div class="status-title">Lines</div>
           <div id="linesStatus" class="status-value">0</div>
           <div id="lineLetters" class="status-meta">Need 5 lines to win.</div>
