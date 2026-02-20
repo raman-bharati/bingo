@@ -22,6 +22,7 @@ const state = {
   pollTimer: null,
   lastTapAt: 0,
   lastTapCell: null,
+  boardDirty: false,
 };
 
 const elements = {
@@ -47,6 +48,7 @@ const elements = {
   winnerModal: document.getElementById("winnerModal"),
   winnerName: document.getElementById("winnerName"),
   leaderboard: document.getElementById("leaderboard"),
+  boardDirtyIndicator: document.getElementById("boardDirtyIndicator"),
 };
 
 const storage = {
@@ -97,11 +99,6 @@ function renderBoard() {
       if (isMarked(cell)) {
         div.classList.add("marked");
       }
-      const lineInfo = isInCompletedLine(r, c);
-      if (lineInfo) {
-        div.classList.add("in-line");
-        div.dataset.lineType = lineInfo;
-      }
       if (state.selectedCell && state.selectedCell[0] === r && state.selectedCell[1] === c && state.inputBuffer) {
         div.textContent = state.inputBuffer;
       } else {
@@ -116,6 +113,7 @@ function renderBoard() {
   
   // Draw completed lines
   drawCompletedLines();
+  updateBoardDirtyIndicator();
 }
 
 function drawCompletedLines() {
@@ -281,6 +279,7 @@ function placeNumber(number) {
   }
   const [row, col] = state.selectedCell;
   state.board[row][col] = number;
+  state.boardDirty = true;
   state.selectedCell = null;
   state.inputBuffer = "";
   renderBoard();
@@ -298,6 +297,9 @@ function autoFillBoard() {
     }
   }
   state.board = nextBoard;
+  state.boardDirty = true;
+  state.selectedCell = null;
+  state.inputBuffer = "";
   renderBoard();
   renderPicker();
   updateLockButton();
@@ -307,6 +309,7 @@ function clearBoard() {
   state.board = createEmptyBoard(state.boardSize);
   state.selectedCell = null;
   state.inputBuffer = "";
+  state.boardDirty = true;
   renderBoard();
   renderPicker();
   updateLockButton();
@@ -315,6 +318,25 @@ function clearBoard() {
 function updateLockButton() {
   const full = state.board.flat().every((cell) => Number.isInteger(cell));
   elements.lockBoard.disabled = !full || !state.playerId || state.calledNumbers.length > 0;
+  updateBoardActions();
+}
+
+function updateBoardActions() {
+  const me = state.players.find((player) => player.id === state.playerId);
+  const isLocked = !!(me && me.ready);
+  if (elements.autoFill) {
+    elements.autoFill.disabled = isLocked;
+  }
+  if (elements.clearBoard) {
+    elements.clearBoard.disabled = isLocked;
+  }
+}
+
+function updateBoardDirtyIndicator() {
+  if (!elements.boardDirtyIndicator) {
+    return;
+  }
+  elements.boardDirtyIndicator.hidden = !state.boardDirty;
 }
 
 function handleBoardSizeChange() {
@@ -340,6 +362,7 @@ function setBoardSize(size, resetBoard) {
     state.board = createEmptyBoard(size);
     state.selectedCell = null;
     state.inputBuffer = "";
+    state.boardDirty = true;
   }
   elements.boardSize.value = String(size);
   renderBoard();
@@ -552,7 +575,12 @@ function applyState(nextState) {
   }
 
   if (nextState.board) {
-    state.board = nextState.board;
+    const me = state.players.find((player) => player.id === state.playerId);
+    const allowServerBoard = state.started || (me && me.ready) || !state.boardDirty;
+    if (allowServerBoard) {
+      state.board = nextState.board;
+      state.boardDirty = false;
+    }
   }
 
   renderBoard();
@@ -561,6 +589,7 @@ function applyState(nextState) {
   renderStatus();
   renderLeaderboard();
   updateLockButton();
+  updateBoardActions();
 }
 
 function renderStatus() {
@@ -753,6 +782,7 @@ function startNextGame() {
       state.board = createEmptyBoard(state.boardSize);
       state.selectedCell = null;
       state.inputBuffer = "";
+      state.boardDirty = true;
       // Reset modal for new game
       if (elements.winnerModal) {
         delete elements.winnerModal.dataset.shown;
@@ -842,10 +872,28 @@ function isMarked(number) {
 function shuffleArray(array) {
   const copy = [...array];
   for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = getRandomInt(i + 1);
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+function getRandomInt(maxExclusive) {
+  if (maxExclusive <= 0) {
+    return 0;
+  }
+  const cryptoObj = typeof window !== "undefined" ? window.crypto || window.msCrypto : null;
+  if (cryptoObj && cryptoObj.getRandomValues) {
+    const limit = Math.floor(0x100000000 / maxExclusive) * maxExclusive;
+    const buffer = new Uint32Array(1);
+    let value = 0;
+    do {
+      cryptoObj.getRandomValues(buffer);
+      value = buffer[0];
+    } while (value >= limit);
+    return value % maxExclusive;
+  }
+  return Math.floor(Math.random() * maxExclusive);
 }
 
 function getCompletedLines() {

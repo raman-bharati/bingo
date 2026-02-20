@@ -47,7 +47,10 @@
       <div class="board-wrap">
         <div class="board-header">
           <div>
-            <div class="board-title">Your board</div>
+            <div class="board-title-row">
+              <div class="board-title">Your board</div>
+              <span id="boardDirtyIndicator" class="board-dirty" aria-live="polite" hidden>editing…</span>
+            </div>
             <div class="board-sub">Pick numbers or auto-generate.</div>
           </div>
           <div class="board-actions">
@@ -80,13 +83,16 @@
           <div class="status-meta" id="callMeta">Waiting for first call.</div>
         </div>
         <div class="status-card">
-          <div class="status-title">Players & Wins</div>
-          <div id="playerList" class="players"></div>
-        </div>
-        <div class="status-card">
           <div class="status-title">Call a number</div>
           <div class="call-grid" id="callGrid"></div>
           <button id="newGame" class="ghost full" disabled>Start game</button>
+        </div>
+      </div>
+
+      <div class="leaderboard-wrap">
+        <div class="leaderboard-card">
+          <div class="leaderboard-title">🏆 Leaderboard</div>
+          <div id="leaderboard" class="leaderboard-list"></div>
         </div>
       </div>
     </section>

@@ -158,6 +158,23 @@ button:disabled {
   font-size: 1.2rem;
 }
 
+.board-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.board-dirty {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-dark);
+  background: rgba(201, 74, 50, 0.12);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(var(--board-size, 5), minmax(clamp(32px, 7vw, 60px), 1fr));
@@ -368,10 +385,6 @@ button:disabled {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--accent);
-}
-
-.board-cell.in-line {
-  background: rgba(201, 74, 50, 0.1);
 }
 
 .line-overlay {
