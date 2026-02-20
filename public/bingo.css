@@ -175,6 +175,12 @@ button:disabled {
   border-radius: 999px;
 }
 
+.board-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(var(--board-size, 5), minmax(clamp(32px, 7vw, 60px), 1fr));

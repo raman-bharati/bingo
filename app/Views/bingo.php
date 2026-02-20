@@ -57,6 +57,7 @@
           <div class="board-actions">
             <button id="autoFill">Auto-generate</button>
             <button id="clearBoard" class="ghost">Clear</button>
+            <button id="lockBoard" class="primary" disabled>Lock & ready</button>
           </div>
         </div>
         <div class="board" id="board"></div>
@@ -64,7 +65,6 @@
           <div class="picker-title">Number picker</div>
           <div class="picker-grid" id="picker"></div>
         </div>
-        <button id="lockBoard" class="primary full" disabled>Lock board and ready</button>
       </div>
 
       <div class="status-wrap">
