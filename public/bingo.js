@@ -99,6 +99,10 @@ function renderBoard() {
       if (isMarked(cell)) {
         div.classList.add("marked");
       }
+      const lineInfo = isInCompletedLine(r, c);
+      if (lineInfo) {
+        applyLineHighlight(div, lineInfo);
+      }
       if (state.selectedCell && state.selectedCell[0] === r && state.selectedCell[1] === c && state.inputBuffer) {
         div.textContent = state.inputBuffer;
       } else {
@@ -110,77 +114,14 @@ function renderBoard() {
       elements.board.appendChild(div);
     });
   });
-  
-  // Draw completed lines
-  drawCompletedLines();
   updateBoardDirtyIndicator();
 }
 
-function drawCompletedLines() {
-  // Remove existing line overlays
-  const existingLines = elements.board.querySelectorAll(".line-overlay");
-  existingLines.forEach(line => line.remove());
-  
-  const board = elements.board;
-  const boardStyle = window.getComputedStyle(board);
-  const padding = parseFloat(boardStyle.padding);
-  const boardRect = board.getBoundingClientRect();
-  const gap = parseFloat(boardStyle.gap) || 8;
-  
-  // Calculate actual content width/height (excluding padding)
-  const contentWidth = boardRect.width - (padding * 2);
-  const contentHeight = boardRect.height - (padding * 2);
-  
-  // Calculate cell size based on content area
-  const totalGaps = (state.boardSize - 1) * gap;
-  const cellSize = (contentWidth - totalGaps) / state.boardSize;
-  
-  const lines = getCompletedLines();
-  
-  lines.forEach(line => {
-    const overlay = document.createElement("div");
-    overlay.className = "line-overlay";
-    
-    if (line.type === "row") {
-      // Horizontal line - position at the vertical center of the row
-      overlay.classList.add("horizontal");
-      const rowCenterY = padding + (line.index * (cellSize + gap)) + (cellSize / 2);
-      overlay.style.top = rowCenterY + "px";
-      overlay.style.left = padding + "px";
-      overlay.style.width = contentWidth + "px";
-      overlay.style.height = "3px";
-    } else if (line.type === "col") {
-      // Vertical line - position at the horizontal center of the column
-      overlay.classList.add("vertical");
-      const colCenterX = padding + (line.index * (cellSize + gap)) + (cellSize / 2);
-      overlay.style.left = colCenterX + "px";
-      overlay.style.top = padding + "px";
-      overlay.style.width = "3px";
-      overlay.style.height = contentHeight + "px";
-    } else if (line.type === "diag" && line.index === 0) {
-      // Top-left to bottom-right diagonal
-      const lineLength = Math.sqrt(contentWidth * contentWidth + contentHeight * contentHeight) * 1.1;
-      overlay.classList.add("diagonal", "tlbr");
-      overlay.style.width = lineLength + "px";
-      overlay.style.height = "3px";
-      overlay.style.left = padding + "px";
-      overlay.style.top = padding + "px";
-      overlay.style.transformOrigin = "left top";
-      overlay.style.transform = `rotate(${Math.atan2(contentHeight, contentWidth) * 180 / Math.PI}deg)`;
-    } else if (line.type === "diag" && line.index === 1) {
-      // Top-right to bottom-left diagonal
-      const lineLength = Math.sqrt(contentWidth * contentWidth + contentHeight * contentHeight) * 1.1;
-      overlay.classList.add("diagonal", "bltr");
-      overlay.style.width = lineLength + "px";
-      overlay.style.height = "3px";
-      overlay.style.right = padding + "px";
-      overlay.style.top = padding + "px";
-      overlay.style.transformOrigin = "right top";
-      overlay.style.transform = `rotate(${-Math.atan2(contentHeight, contentWidth) * 180 / Math.PI}deg)`;
-    }
-    
-    board.appendChild(overlay);
-  });
+function applyLineHighlight(cell, lineType) {
+  cell.dataset.lineType = lineType;
+  cell.style.background = "rgba(242, 107, 79, 0.16)";
+  cell.style.borderColor = "var(--accent-dark)";
+  cell.style.boxShadow = "0 0 0 2px rgba(242, 107, 79, 0.2)";
 }
 
 function renderPicker() {
@@ -575,8 +516,7 @@ function applyState(nextState) {
   }
 
   if (nextState.board) {
-    const me = state.players.find((player) => player.id === state.playerId);
-    const allowServerBoard = state.started || (me && me.ready) || !state.boardDirty;
+    const allowServerBoard = !state.boardDirty;
     if (allowServerBoard) {
       state.board = nextState.board;
       state.boardDirty = false;
@@ -613,6 +553,9 @@ function renderStatus() {
   const playerIndex = state.players.findIndex((p) => p.id === state.playerId);
   const isMyTurn = state.started && playerIndex === state.turnIndex;
   const currentPlayer = state.players[state.turnIndex];
+  const drawPlayers = state.players.filter((player) => (player.lines || 0) >= 5);
+  const isDraw = !state.winnerId && state.started && drawPlayers.length >= 2;
+  const isGameOver = !!state.winnerId || isDraw;
 
   if (state.winnerId) {
     const winner = state.players.find((p) => p.id === state.winnerId);
@@ -624,6 +567,13 @@ function renderStatus() {
     // Only show modal if it hasn't been shown for this game
     if (winner && elements.winnerModal && elements.winnerModal.dataset.shown === undefined) {
       showWinnerCelebration(winner.name);
+    }
+  } else if (isDraw) {
+    const drawNames = drawPlayers.map((player) => player.name).join(" & ");
+    elements.turnStatus.textContent = `Draw! ${drawNames} reached 5 lines.`;
+    if (elements.newGame) {
+      elements.newGame.textContent = "Start next game";
+      elements.newGame.disabled = false;
     }
   } else if (!allReady()) {
     elements.turnStatus.textContent = "Waiting for all players to be ready.";
@@ -682,7 +632,7 @@ function renderStatus() {
   callButtons.forEach((button) => {
     const number = Number(button.textContent);
     const alreadyCalled = state.calledNumbers.includes(number);
-    button.disabled = alreadyCalled || !isMyTurn || !allReady() || !state.started || !!state.winnerId;
+    button.disabled = alreadyCalled || !isMyTurn || !allReady() || !state.started || isGameOver;
     button.classList.toggle("called", alreadyCalled);
   });
 
