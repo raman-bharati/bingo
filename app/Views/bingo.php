@@ -3,12 +3,65 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bingo Multiplayer</title>
+  
+  <!-- Primary Meta Tags -->
+  <title>Bingo Multiplayer - Play Real-Time Bingo Online Free | 5x5, 7x7, 9x9 Boards</title>
+  <meta name="title" content="Bingo Multiplayer - Play Real-Time Bingo Online Free">
+  <meta name="description" content="Play multiplayer bingo online with friends in real-time. Create custom boards (5x5, 7x7, 9x9), take turns calling numbers, and compete for 5 lines. Free multiplayer bingo game with live updates!">
+  <meta name="keywords" content="bingo, multiplayer bingo, online bingo, play bingo online, bingo game, real-time bingo, free bingo, bingo with friends">
+  <meta name="author" content="Raman">
+  <link rel="canonical" href="<?= base_url('/bingo') ?>">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="<?= base_url('/bingo') ?>">
+  <meta property="og:title" content="Bingo Multiplayer - Play Real-Time Bingo Online Free">
+  <meta property="og:description" content="Play multiplayer bingo online with friends in real-time. Create custom boards, take turns calling numbers, and compete for 5 lines!">
+  <meta property="og:image" content="<?= base_url('/bingo-og.png') ?>">
+  <meta property="og:site_name" content="Bingo Multiplayer">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="<?= base_url('/bingo') ?>">
+  <meta property="twitter:title" content="Bingo Multiplayer - Play Real-Time Bingo Online Free">
+  <meta property="twitter:description" content="Play multiplayer bingo online with friends in real-time. Create custom boards, take turns calling numbers, and compete for 5 lines!">
+  <meta property="twitter:image" content="<?= base_url('/bingo-og.png') ?>">
+  
+  <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+  
+  <!-- Preconnect for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/bingo.css">
+  
+  <!-- Structured Data / JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Bingo Multiplayer",
+    "description": "Play multiplayer bingo online with friends in real-time. Create custom boards (5x5, 7x7, 9x9), take turns calling numbers, and compete for 5 lines.",
+    "url": "<?= base_url('/bingo') ?>",
+    "applicationCategory": "Game",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Raman"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "1"
+    }
+  }
+  </script>
 </head>
 <body>
   <main class="page">
