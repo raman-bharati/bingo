@@ -233,6 +233,18 @@ button:disabled {
   border-radius: 999px;
 }
 
+.board-cell.completed-line {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.25);
+}
+
+.board-cell.marked.completed-line {
+  background: #81c784;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.3);
+}
+
 .picker {
   background: #fff7ec;
   border-radius: 16px;

@@ -101,7 +101,7 @@ function renderBoard() {
       }
       const lineInfo = isInCompletedLine(r, c);
       if (lineInfo) {
-        applyLineHighlight(div, lineInfo);
+        div.classList.add("completed-line");
       }
       if (state.selectedCell && state.selectedCell[0] === r && state.selectedCell[1] === c && state.inputBuffer) {
         div.textContent = state.inputBuffer;
@@ -115,13 +115,6 @@ function renderBoard() {
     });
   });
   updateBoardDirtyIndicator();
-}
-
-function applyLineHighlight(cell, lineType) {
-  cell.dataset.lineType = lineType;
-  cell.style.background = "rgba(242, 107, 79, 0.16)";
-  cell.style.borderColor = "var(--accent-dark)";
-  cell.style.boxShadow = "0 0 0 2px rgba(242, 107, 79, 0.2)";
 }
 
 function renderPicker() {
