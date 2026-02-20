@@ -43,7 +43,6 @@ const elements = {
   lastCall: document.getElementById("lastCall"),
   callMeta: document.getElementById("callMeta"),
   playerList: document.getElementById("playerList"),
-  callGrid: document.getElementById("callGrid"),
   newGame: document.getElementById("newGame"),
   winnerModal: document.getElementById("winnerModal"),
   winnerName: document.getElementById("winnerName"),
@@ -62,7 +61,6 @@ function init() {
   elements.boardSize.value = String(state.boardSize);
   renderBoard();
   renderPicker();
-  renderCallGrid();
 
   elements.createRoom.addEventListener("click", () => handleRoomAction("create"));
   elements.joinRoom.addEventListener("click", () => handleRoomAction("join"));
@@ -133,25 +131,6 @@ function renderPicker() {
     }
     button.addEventListener("click", () => placeNumber(i));
     elements.picker.appendChild(button);
-  }
-}
-
-function renderCallGrid() {
-  if (!elements.callGrid) {
-    console.warn("Call grid element not found");
-    return;
-  }
-  elements.callGrid.innerHTML = "";
-  for (let i = 1; i <= state.maxNumber; i++) {
-    const button = document.createElement("button");
-    button.className = "call-button";
-    button.textContent = String(i);
-    if (state.calledNumbers.includes(i)) {
-      button.classList.add("called");
-      button.disabled = true;
-    }
-    button.addEventListener("click", () => callNumber(i));
-    elements.callGrid.appendChild(button);
   }
 }
 
@@ -301,7 +280,6 @@ function setBoardSize(size, resetBoard) {
   elements.boardSize.value = String(size);
   renderBoard();
   renderPicker();
-  renderCallGrid();
   updateLockButton();
 }
 
@@ -518,7 +496,6 @@ function applyState(nextState) {
 
   renderBoard();
   renderPicker();
-  renderCallGrid();
   renderStatus();
   renderLeaderboard();
   updateLockButton();
@@ -619,14 +596,6 @@ function renderStatus() {
     row.appendChild(label);
     row.appendChild(meta);
     elements.playerList.appendChild(row);
-  });
-
-  const callButtons = elements.callGrid.querySelectorAll("button");
-  callButtons.forEach((button) => {
-    const number = Number(button.textContent);
-    const alreadyCalled = state.calledNumbers.includes(number);
-    button.disabled = alreadyCalled || !isMyTurn || !allReady() || !state.started || isGameOver;
-    button.classList.toggle("called", alreadyCalled);
   });
 
   renderLeaderboard();

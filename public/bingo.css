@@ -365,6 +365,9 @@ button:disabled {
 .leaderboard-list {
   display: grid;
   gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 12px;
 }
 
 .leaderboard-row {
