@@ -476,18 +476,30 @@ class BingoController extends BaseController
         $path = $this->getRoomStorePath();
         $data = [];
 
-        if (is_file($path)) {
-            $contents = file_get_contents($path);
-            if ($contents !== false) {
-                $decoded = json_decode($contents, true);
-                if (is_array($decoded)) {
-                    $data = $decoded;
+        // Use file locking to prevent concurrent write issues
+        $fp = fopen($path, 'c+');
+        if ($fp && flock($fp, LOCK_EX)) {
+            try {
+                rewind($fp);
+                $contents = stream_get_contents($fp);
+                if ($contents !== false && $contents !== '') {
+                    $decoded = json_decode($contents, true);
+                    if (is_array($decoded)) {
+                        $data = $decoded;
+                    }
                 }
+
+                $data[$roomCode] = $room;
+                
+                // Truncate and write
+                ftruncate($fp, 0);
+                rewind($fp);
+                fwrite($fp, json_encode($data));
+            } finally {
+                flock($fp, LOCK_UN);
+                fclose($fp);
             }
         }
-
-        $data[$roomCode] = $room;
-        file_put_contents($path, json_encode($data));
     }
 
     private function getRoomStorePath(): string

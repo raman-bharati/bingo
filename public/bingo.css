@@ -218,6 +218,9 @@ button:disabled {
   place-items: center;
   position: relative;
   font-size: clamp(0.75rem, 2vw, 1rem);
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .board-cell.selected {

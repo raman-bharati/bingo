@@ -23,6 +23,8 @@ const state = {
   lastTapAt: 0,
   lastTapCell: null,
   boardDirty: false,
+  lastStateHash: "",
+  renderThrottled: false,
 };
 
 const elements = {
@@ -87,6 +89,8 @@ function renderBoard() {
   elements.board.dataset.size = String(state.boardSize);
   elements.board.style.position = "relative";
   
+  const fragment = document.createDocumentFragment();
+  
   state.board.forEach((row, r) => {
     row.forEach((cell, c) => {
       const div = document.createElement("div");
@@ -109,9 +113,11 @@ function renderBoard() {
       div.addEventListener("click", () => handleCellClick(r, c));
       div.addEventListener("dblclick", () => handleCellCall(r, c));
       div.addEventListener("touchend", (event) => handleCellTouch(event, r, c), { passive: false });
-      elements.board.appendChild(div);
+      fragment.appendChild(div);
     });
   });
+  
+  elements.board.appendChild(fragment);
   updateBoardDirtyIndicator();
 }
 
@@ -121,6 +127,9 @@ function renderPicker() {
     return;
   }
   elements.picker.innerHTML = "";
+  
+  const fragment = document.createDocumentFragment();
+  
   for (let i = 1; i <= state.maxNumber; i++) {
     const button = document.createElement("button");
     button.className = "picker-button";
@@ -130,8 +139,10 @@ function renderPicker() {
       button.disabled = true;
     }
     button.addEventListener("click", () => placeNumber(i));
-    elements.picker.appendChild(button);
+    fragment.appendChild(button);
   }
+  
+  elements.picker.appendChild(fragment);
 }
 
 function handleCellClick(row, col) {
@@ -453,19 +464,37 @@ function startPolling() {
   if (state.pollTimer) {
     clearInterval(state.pollTimer);
   }
+  
+  // Use exponential backoff - start at 1s, max 5s
+  let pollInterval = 1000;
+  let consecutiveEmptyPolls = 0;
+  
   state.pollTimer = setInterval(() => {
     if (!state.roomCode) {
       return;
     }
+    
     fetch(`${BASE_URL}/bingo/room/state?roomCode=${encodeURIComponent(state.roomCode)}&playerId=${encodeURIComponent(state.playerId)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.ok) {
-          applyState(data.state);
+          const newHash = JSON.stringify(data.state);
+          if (newHash !== state.lastStateHash) {
+            state.lastStateHash = newHash;
+            applyState(data.state);
+            consecutiveEmptyPolls = 0;
+            pollInterval = 1000; // Reset interval on state change
+          } else {
+            // Increase interval if no changes detected
+            consecutiveEmptyPolls++;
+            if (consecutiveEmptyPolls > 3) {
+              pollInterval = Math.min(5000, pollInterval + 500);
+            }
+          }
         }
       })
       .catch(() => {});
-  }, 1500);
+  }, pollInterval);
 }
 
 function applyState(nextState) {
@@ -583,6 +612,8 @@ function renderStatus() {
   }
 
   elements.playerList.innerHTML = "";
+  
+  const playerFragment = document.createDocumentFragment();
   state.players.forEach((player, idx) => {
     const row = document.createElement("div");
     row.className = "player-row";
@@ -595,8 +626,10 @@ function renderStatus() {
     meta.textContent = `${readyMarker}${winsText}`;
     row.appendChild(label);
     row.appendChild(meta);
-    elements.playerList.appendChild(row);
+    playerFragment.appendChild(row);
   });
+  
+  elements.playerList.appendChild(playerFragment);
 
   renderLeaderboard();
 }
@@ -607,7 +640,10 @@ function renderLeaderboard() {
     return;
   }
   elements.leaderboard.innerHTML = "";
+  
+  const fragment = document.createDocumentFragment();
   const sorted = [...state.players].sort((a, b) => (b.wins || 0) - (a.wins || 0));
+  
   sorted.forEach((player, idx) => {
     const row = document.createElement("div");
     row.className = "leaderboard-row";
@@ -621,8 +657,10 @@ function renderLeaderboard() {
     wins.textContent = `${player.wins || 0} win${(player.wins || 0) !== 1 ? "s" : ""}`;
     row.appendChild(name);
     row.appendChild(wins);
-    elements.leaderboard.appendChild(row);
+    fragment.appendChild(row);
   });
+  
+  elements.leaderboard.appendChild(fragment);
 }
 
 function callNumber(number) {
