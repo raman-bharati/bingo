@@ -464,14 +464,14 @@ function lockBoard() {
 
 function startPolling() {
   if (state.pollTimer) {
-    clearInterval(state.pollTimer);
+    clearTimeout(state.pollTimer);
   }
   
-  // Use exponential backoff - start at 1s, max 5s
+  // Use dynamic interval with exponential backoff
   let pollInterval = 1000;
   let consecutiveEmptyPolls = 0;
   
-  state.pollTimer = setInterval(() => {
+  const doPoll = () => {
     if (!state.roomCode) {
       return;
     }
@@ -494,9 +494,17 @@ function startPolling() {
             }
           }
         }
+        // Schedule next poll with updated interval
+        state.pollTimer = setTimeout(doPoll, pollInterval);
       })
-      .catch(() => {});
-  }, pollInterval);
+      .catch(() => {
+        // Retry on error after current interval
+        state.pollTimer = setTimeout(doPoll, pollInterval);
+      });
+  };
+  
+  // Start first poll
+  doPoll();
 }
 
 function applyState(nextState) {
@@ -736,7 +744,7 @@ function startNextGame() {
       state.boardDirty = false;
       // Reset modal for new game
       if (elements.winnerModal) {
-        delete elements.winnerModal.dataset.shown;
+        elements.winnerModal.removeAttribute('data-shown');
         elements.winnerModal.style.display = "none";
       }
       applyState(data.state);

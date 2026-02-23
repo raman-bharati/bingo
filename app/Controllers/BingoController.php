@@ -599,7 +599,7 @@ class BingoController extends BaseController
             $players[] = [
                 'id' => $player['id'],
                 'name' => $player['name'],
-                'lines' => ($player['id'] === $playerId) ? ($player['lines'] ?? 0) : 0,
+                'lines' => $player['lines'] ?? 0,
                 'ready' => $player['ready'] ?? false,
                 'wins' => $player['wins'] ?? 0,
             ];
