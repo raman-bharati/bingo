@@ -58,7 +58,7 @@ class BingoController extends BaseController
             'calledNumbers' => [],
             'turnIndex' => 0,
             'startIndex' => 0,
-            'winnerId' => null,
+            'winnerIds' => [],
             'lastCall' => null,
             'started' => false,
             'roomWins' => [],
@@ -205,7 +205,7 @@ class BingoController extends BaseController
             return $this->fail('Room not found.', 404);
         }
 
-        if ($room['winnerId'] !== null) {
+        if (!empty($room['winnerIds'])) {
             return $this->fail('Game is over.', 409);
         }
 
@@ -242,19 +242,25 @@ class BingoController extends BaseController
             'at' => time(),
         ];
 
-        $winnerBefore = $room['winnerId'];
+        // Track all players who reached 5 lines
+        $playersAt5Lines = [];
         foreach ($room['players'] as $idx => $player) {
             $board = $player['board'] ?? null;
             $room['players'][$idx]['lines'] = $this->countLines($board, $room['calledNumbers'], (int)($room['boardSize'] ?? 5));
-            if ($room['players'][$idx]['lines'] >= 5 && $room['winnerId'] === null) {
-                $room['winnerId'] = $player['id'];
+            if ($room['players'][$idx]['lines'] >= 5) {
+                $playersAt5Lines[] = $player['id'];
             }
         }
 
-        if ($winnerBefore === null && $room['winnerId'] !== null) {
-            $winnerIndex = $this->findPlayerIndex($room, (string)$room['winnerId']);
-            if ($winnerIndex !== -1) {
-                $room['players'][$winnerIndex]['wins'] = (int)($room['players'][$winnerIndex]['wins'] ?? 0) + 1;
+        // Only mark winners if no previous winners exist (first time reaching 5 lines)
+        if (empty($room['winnerIds']) && !empty($playersAt5Lines)) {
+            $room['winnerIds'] = $playersAt5Lines;
+            // Increment wins for all winners
+            foreach ($playersAt5Lines as $winnerId) {
+                $winnerIndex = $this->findPlayerIndex($room, $winnerId);
+                if ($winnerIndex !== -1) {
+                    $room['players'][$winnerIndex]['wins'] = (int)($room['players'][$winnerIndex]['wins'] ?? 0) + 1;
+                }
             }
         }
 
@@ -287,12 +293,12 @@ class BingoController extends BaseController
             return $this->fail('Player not found.', 404);
         }
 
-        if ($room['winnerId'] === null && !empty($room['calledNumbers'])) {
+        if (!empty($room['winnerIds']) && !empty($room['calledNumbers'])) {
             return $this->fail('Game is still in progress.', 409);
         }
 
         $room['calledNumbers'] = [];
-        $room['winnerId'] = null;
+        $room['winnerIds'] = [];
         $room['lastCall'] = null;
         $room['started'] = false;
 
@@ -615,7 +621,7 @@ class BingoController extends BaseController
             'calledNumbers' => $room['calledNumbers'],
             'turnIndex' => $room['turnIndex'],
             'startIndex' => $room['startIndex'],
-            'winnerId' => $room['winnerId'],
+            'winnerIds' => $room['winnerIds'] ?? [],
             'lastCall' => $room['lastCall'],
             'board' => $playerBoard,
             'started' => $started,

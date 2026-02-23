@@ -15,7 +15,7 @@ const state = {
   turnIndex: 0,
   startIndex: 0,
   players: [],
-  winnerId: null,
+  winnerIds: [],
   lastCall: null,
   started: false,
   completedLines: [],
@@ -48,6 +48,8 @@ const elements = {
   newGame: document.getElementById("newGame"),
   winnerModal: document.getElementById("winnerModal"),
   winnerName: document.getElementById("winnerName"),
+  winnerMessage: document.getElementById("winnerMessage"),
+  winnersList: document.getElementById("winnersList"),
   leaderboard: document.getElementById("leaderboard"),
   boardDirtyIndicator: document.getElementById("boardDirtyIndicator"),
 };
@@ -198,7 +200,7 @@ function placeNumber(number) {
     return;
   }
   if (boardHasNumber(number, state.selectedCell)) {
-    alert("Each number must be unique.");
+    alert("This number is already on your board. Each number must be unique.");
     return;
   }
   const [row, col] = state.selectedCell;
@@ -271,7 +273,7 @@ function handleBoardSizeChange() {
   }
 
   if (state.roomCode && state.calledNumbers.length > 0) {
-    alert("Board size is locked once a game starts.");
+    alert("You can't change the board size once the game has started.");
     elements.boardSize.value = String(state.boardSize);
     return;
   }
@@ -348,7 +350,7 @@ function commitBuffer() {
   if (boardHasNumber(value, state.selectedCell)) {
     state.inputBuffer = "";
     renderBoard();
-    alert("Each number must be unique.");
+    alert("This number is already on your board. Each number must be unique.");
     return;
   }
   placeNumber(value);
@@ -358,7 +360,7 @@ function handleRoomAction(action) {
   const name = elements.playerName.value.trim();
   const roomCode = elements.roomCode.value.trim();
   if (!name || !roomCode) {
-    alert("⚠️ Error: Enter your name and room code.");
+    alert("Please enter your name and a room code to continue.");
     return;
   }
   state.playerName = name;
@@ -385,18 +387,18 @@ function handleRoomAction(action) {
     })
     .then((data) => {
       if (!data.ok) {
-        let errorMsg = data.error || "Unknown error";
+        let errorMsg = data.error || "Something went wrong";
         // Add helpful suggestions for common errors
         if (errorMsg === "Room already exists." && action === "create") {
-          errorMsg += "\n\nTry a different room code.";
+          errorMsg = "This room already exists. Try a different room code.";
         } else if (errorMsg === "Room not found." && action === "join") {
-          errorMsg += "\n\nAsk the creator for the correct room code.";
+          errorMsg = "Room not found. Please check the room code with your friends.";
         } else if (errorMsg === "Game already started.") {
-          errorMsg += "\n\nYou cannot join or change your board once the game has started.";
+          errorMsg = "This game has already started. You can't join once a game is in progress.";
         } else if (errorMsg === "Board size does not match the room.") {
-          errorMsg += "\n\nSelect the same board size as the room.";
+          errorMsg = "Board size mismatch. Please select the same board size as the room.";
         }
-        alert(`⚠️ ${action === 'create' ? 'Create Room' : 'Join Room'} Error:\n\n${errorMsg}`);
+        alert(errorMsg);
         console.error(`Room ${action} error:`, data);
         return;
       }
@@ -407,19 +409,19 @@ function handleRoomAction(action) {
       startPolling();
     })
     .catch((err) => {
-      alert(`⚠️ ${action === 'create' ? 'Create Room' : 'Join Room'} Failed:\n\n${err.message}\n\nCheck console for details.`);
+      alert(`Unable to ${action === 'create' ? 'create room' : 'join room'}. Please check your connection and try again.`);
       console.error(`Room ${action} exception:`, err);
     });
 }
 
 function lockBoard() {
   if (!state.playerId || !state.roomCode) {
-    alert("⚠️ Error: Join a room first.");
+    alert("Please join a room first.");
     return;
   }
   const boardReady = state.board.flat().every((cell) => Number.isInteger(cell));
   if (!boardReady) {
-    alert("⚠️ Error: Fill all cells on your board before locking.");
+    alert("Please fill all cells on your board before locking it.");
     return;
   }
   fetch(`${BASE_URL}/bingo/room/board`, {
@@ -439,23 +441,23 @@ function lockBoard() {
     })
     .then((data) => {
       if (!data.ok) {
-        let errorMsg = data.error || "Unknown error";
+        let errorMsg = data.error || "Something went wrong";
         // Add helpful suggestions
         if (errorMsg === "Game already started.") {
-          errorMsg += "\n\nYou cannot change your board after the game has started.";
+          errorMsg = "The game has already started. You can't change your board now.";
         } else if (errorMsg === "Room not found.") {
-          errorMsg += "\n\nThe room no longer exists.";
+          errorMsg = "This room no longer exists.";
         } else if (errorMsg === "Player not found.") {
-          errorMsg += "\n\nYou are not in this room.";
+          errorMsg = "You're not in this room anymore.";
         }
-        alert(`⚠️ Lock Board Error:\n\n${errorMsg}`);
+        alert(errorMsg);
         console.error("Lock board error:", data);
         return;
       }
       applyState(data.state);
     })
     .catch((err) => {
-      alert(`⚠️ Lock Board Failed:\n\n${err.message}\n\nCheck console for details.`);
+      alert("Unable to lock board. Please check your connection and try again.");
       console.error("Lock board exception:", err);
     });
 }
@@ -503,7 +505,7 @@ function applyState(nextState) {
   state.calledNumbers = nextState.calledNumbers || [];
   state.turnIndex = nextState.turnIndex ?? 0;
   state.startIndex = nextState.startIndex ?? 0;
-  state.winnerId = nextState.winnerId || null;
+  state.winnerIds = nextState.winnerIds || [];
   state.lastCall = nextState.lastCall || null;
   state.started = !!nextState.started;
 
@@ -552,27 +554,26 @@ function renderStatus() {
   const playerIndex = state.players.findIndex((p) => p.id === state.playerId);
   const isMyTurn = state.started && playerIndex === state.turnIndex;
   const currentPlayer = state.players[state.turnIndex];
-  const drawPlayers = state.players.filter((player) => (player.lines || 0) >= 5);
-  const isDraw = !state.winnerId && state.started && drawPlayers.length >= 2;
-  const isGameOver = !!state.winnerId || isDraw;
+  const isGameOver = state.winnerIds.length > 0;
+  const isMultipleWinners = state.winnerIds.length > 1;
 
-  if (state.winnerId) {
-    const winner = state.players.find((p) => p.id === state.winnerId);
-    elements.turnStatus.textContent = winner ? `${winner.name} wins!` : "Game over.";
+  if (isGameOver) {
+    const winners = state.players.filter((p) => state.winnerIds.includes(p.id));
+    if (isMultipleWinners) {
+      const winnerNames = winners.map((w) => w.name).join(" & ");
+      elements.turnStatus.textContent = `${winnerNames} reached 5 lines!`;
+    } else if (winners.length === 1) {
+      elements.turnStatus.textContent = `${winners[0].name} wins!`;
+    } else {
+      elements.turnStatus.textContent = "Game over.";
+    }
     if (elements.newGame) {
       elements.newGame.textContent = "Start next game";
       elements.newGame.disabled = false;
     }
     // Only show modal if it hasn't been shown for this game
-    if (winner && elements.winnerModal && elements.winnerModal.dataset.shown === undefined) {
-      showWinnerCelebration(winner.name);
-    }
-  } else if (isDraw) {
-    const drawNames = drawPlayers.map((player) => player.name).join(" & ");
-    elements.turnStatus.textContent = `Draw! ${drawNames} reached 5 lines.`;
-    if (elements.newGame) {
-      elements.newGame.textContent = "Start next game";
-      elements.newGame.disabled = false;
+    if (winners.length > 0 && elements.winnerModal && elements.winnerModal.dataset.shown === undefined) {
+      showWinnerCelebration(winners, isMultipleWinners);
     }
   } else if (!allReady()) {
     elements.turnStatus.textContent = "Waiting for all players to be ready.";
@@ -668,7 +669,7 @@ function callNumber(number) {
     return;
   }
   if (!state.started) {
-    alert("⚠️ Start the game first.");
+    alert("Please start the game first.");
     return;
   }
   fetch(`${BASE_URL}/bingo/room/call`, {
@@ -688,25 +689,25 @@ function callNumber(number) {
     })
     .then((data) => {
       if (!data.ok) {
-        let errorMsg = data.error || "Unknown error";
+        let errorMsg = data.error || "Something went wrong";
         // Add helpful suggestions
         if (errorMsg === "Not your turn.") {
-          errorMsg += "\n\nWait for your turn to call.";
+          errorMsg = "Please wait for your turn to call a number.";
         } else if (errorMsg === "Number already called.") {
-          errorMsg += "\n\nPick a different number.";
+          errorMsg = "This number has already been called. Pick a different one.";
         } else if (errorMsg === "Game is over.") {
-          errorMsg += "\n\nStart a new game.";
+          errorMsg = "The game is over. Start a new game to continue.";
         } else if (errorMsg === "Waiting for all players to be ready.") {
-          errorMsg += "\n\nWait for all players to lock their boards.";
+          errorMsg = "Waiting for all players to lock their boards.";
         }
-        alert(`⚠️ Error:\n\n${errorMsg}`);
+        alert(errorMsg);
         console.error("Call number error:", data);
         return;
       }
       applyState(data.state);
     })
     .catch((err) => {
-      alert(`⚠️ Call failed:\n\n${err.message}`);
+      alert("Unable to call this number. Please check your connection and try again.");
       console.error("Call error:", err);
     });
 }
@@ -726,7 +727,7 @@ function startNextGame() {
     .then((res) => res.json())
     .then((data) => {
       if (!data.ok) {
-        alert(data.error || "New game failed.");
+        alert(data.error || "Unable to start a new game. Please try again.");
         return;
       }
       state.board = createEmptyBoard(state.boardSize);
@@ -743,7 +744,7 @@ function startNextGame() {
       renderPicker();
       updateLockButton();
     })
-    .catch(() => alert("New game failed."));
+    .catch(() => alert("Unable to start a new game. Please check your connection."));
 }
 
 function startGame() {
@@ -761,12 +762,12 @@ function startGame() {
     .then((res) => res.json())
     .then((data) => {
       if (!data.ok) {
-        alert(data.error || "Start game failed.");
+        alert(data.error || "Unable to start the game. Please try again.");
         return;
       }
       applyState(data.state);
     })
-    .catch(() => alert("Start game failed."));
+    .catch(() => alert("Unable to start the game. Please check your connection."));
 }
 
 function handleGameButton() {
@@ -777,7 +778,7 @@ function handleGameButton() {
     startGame();
     return;
   }
-  if (state.winnerId) {
+  if (state.winnerIds.length > 0) {
     startNextGame();
   }
 }
@@ -913,9 +914,39 @@ function isInCompletedLine(r, c) {
   return null;
 }
 
-function showWinnerCelebration(name) {
-  if (!elements.winnerModal || !elements.winnerName) return;
-  elements.winnerName.textContent = name;
+function showWinnerCelebration(winners, isMultipleWinners) {
+  if (!elements.winnerModal || !elements.winnerName || !elements.winnerMessage) return;
+  
+  if (isMultipleWinners) {
+    // Multiple winners (draw)
+    elements.winnerName.textContent = "It's a draw!";
+    elements.winnerMessage.textContent = "🎯 Multiple players reached 5 lines! 🎯";
+    
+    // Show list of winners
+    if (elements.winnersList) {
+      elements.winnersList.innerHTML = "";
+      elements.winnersList.style.display = "block";
+      const fragment = document.createDocumentFragment();
+      winners.forEach((winner, idx) => {
+        const div = document.createElement("div");
+        div.className = "winner-item";
+        const medal = ["🥇", "🥈", "🥉"][idx] || "🏆";
+        div.textContent = `${medal} ${winner.name}`;
+        fragment.appendChild(div);
+      });
+      elements.winnersList.appendChild(fragment);
+    }
+  } else {
+    // Single winner
+    elements.winnerName.textContent = winners[0].name;
+    elements.winnerMessage.textContent = "🎉 WINS! 🎉";
+    
+    // Hide winners list for single winner
+    if (elements.winnersList) {
+      elements.winnersList.style.display = "none";
+    }
+  }
+  
   elements.winnerModal.dataset.shown = "true";
   elements.winnerModal.style.display = "flex";
   playConfetti();

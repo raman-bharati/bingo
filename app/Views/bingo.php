@@ -173,7 +173,8 @@
       <div class="celebration">
         <div class="confetti"></div>
         <h2 id="winnerName"></h2>
-        <p>🎉 WINS! 🎉</p>
+        <p id="winnerMessage">🎉 WINS! 🎉</p>
+        <div id="winnersList" class="winners-list"></div>
         <button id="closeWinnerModal" class="primary">Continue</button>
       </div>
     </div>
