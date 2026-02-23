@@ -293,7 +293,7 @@ class BingoController extends BaseController
             return $this->fail('Player not found.', 404);
         }
 
-        if (!empty($room['winnerIds']) && !empty($room['calledNumbers'])) {
+        if (empty($room['winnerIds']) && !empty($room['calledNumbers'])) {
             return $this->fail('Game is still in progress.', 409);
         }
 
