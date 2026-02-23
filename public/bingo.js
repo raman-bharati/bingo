@@ -514,9 +514,20 @@ function applyState(nextState) {
   state.calledNumbers = nextState.calledNumbers || [];
   state.turnIndex = nextState.turnIndex ?? 0;
   state.startIndex = nextState.startIndex ?? 0;
+  
+  // Check if game was over but now starting fresh
+  const wasGameOver = state.winnerIds.length > 0;
+  const isNowGameOver = (nextState.winnerIds || []).length > 0;
+  
   state.winnerIds = nextState.winnerIds || [];
   state.lastCall = nextState.lastCall || null;
   state.started = !!nextState.started;
+
+  // Reset modal when transitioning from game-over to new game
+  if (wasGameOver && !isNowGameOver && elements.winnerModal) {
+    elements.winnerModal.removeAttribute('data-shown');
+    elements.winnerModal.style.display = "none";
+  }
 
   if (nextState.boardSize && nextState.boardSize !== state.boardSize) {
     setBoardSize(nextState.boardSize, true);
