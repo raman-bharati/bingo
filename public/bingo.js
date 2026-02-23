@@ -25,6 +25,7 @@ const state = {
   boardDirty: false,
   lastStateHash: "",
   renderThrottled: false,
+  isSubmitting: false, // Prevent double submissions
 };
 
 const elements = {
@@ -680,6 +681,10 @@ function callNumber(number) {
     alert("Please start the game first.");
     return;
   }
+  if (state.isSubmitting) {
+    return; // Prevent double submission
+  }
+  state.isSubmitting = true;
   fetch(`${BASE_URL}/bingo/room/call`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -717,6 +722,9 @@ function callNumber(number) {
     .catch((err) => {
       alert("Unable to call this number. Please check your connection and try again.");
       console.error("Call error:", err);
+    })
+    .finally(() => {
+      state.isSubmitting = false;
     });
 }
 

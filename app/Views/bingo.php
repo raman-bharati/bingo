@@ -182,6 +182,26 @@
 
   <script>
     window.BINGO_BASE = window.location.origin;
+    
+    // Register service worker for offline support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+          console.log('Service worker registration failed');
+        });
+      });
+    }
+    
+    // Global error handler
+    window.addEventListener('error', (event) => {
+      console.error('Global error:', event.error);
+      // Optionally send to error tracking service
+    });
+    
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      // Optionally send to error tracking service
+    });
   </script>
   <script src="/bingo.js"></script>
 </body>
