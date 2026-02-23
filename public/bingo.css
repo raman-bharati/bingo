@@ -137,9 +137,16 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
+  align-items: start;
 }
 
-.board-wrap,
+.board-wrap {
+  display: grid;
+  gap: 16px;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .status-wrap,
 .leaderboard-wrap {
   display: grid;
@@ -183,49 +190,54 @@ button:disabled {
 
 .board {
   display: grid;
-  grid-template-columns: repeat(var(--board-size, 5), minmax(clamp(32px, 7vw, 60px), 1fr));
+  grid-template-columns: repeat(var(--board-size, 5), 1fr);
   gap: clamp(4px, 1.5vw, 8px);
   background: rgba(255, 255, 255, 0.7);
   padding: clamp(8px, 2vw, 16px);
   border-radius: 16px;
   border: 1px solid rgba(31, 26, 20, 0.1);
-  max-width: 600px;
+  max-width: min(600px, 100%);
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .board[data-size="7"] {
-  gap: clamp(3px, 1.2vw, 6px);
-  grid-template-columns: repeat(7, minmax(clamp(28px, 5vw, 50px), 1fr));
+  gap: clamp(2px, 1vw, 5px);
+  max-width: min(500px, 100%);
 }
 
 .board[data-size="9"] {
-  gap: clamp(2px, 0.8vw, 4px);
-  grid-template-columns: repeat(9, minmax(clamp(26px, 4vw, 44px), 1fr));
+  gap: clamp(2px, 0.6vw, 4px);
+  max-width: min(450px, 100%);
+  padding: clamp(6px, 1.5vw, 12px);
 }
 
 .board[data-size="7"] .board-cell,
 .board[data-size="9"] .board-cell {
-  min-height: clamp(28px, 5vw, 44px);
-  font-size: clamp(0.7rem, 1.8vw, 0.85rem);
-  padding: clamp(4px, 0.8vw, 10px) clamp(2px, 0.4vw, 4px);
+  min-height: clamp(26px, 4vw, 40px);
+  font-size: clamp(0.65rem, 1.5vw, 0.8rem);
+  padding: clamp(3px, 0.6vw, 8px) clamp(2px, 0.3vw, 4px);
 }
 
 .board-cell {
   background: #fff;
-  border-radius: 12px;
-  padding: clamp(6px, 1vw, 12px) clamp(2px, 0.5vw, 4px);
+  border-radius: clamp(8px, 2vw, 12px);
+  padding: clamp(4px, 0.8vw, 10px) clamp(2px, 0.4vw, 4px);
   text-align: center;
   font-weight: 600;
-  box-shadow: 0 10px 20px var(--shadow);
+  box-shadow: 0 8px 16px var(--shadow);
   border: 2px solid transparent;
-  min-height: clamp(40px, 8vw, 60px);
+  min-height: clamp(36px, 7vw, 56px);
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
   position: relative;
-  font-size: clamp(0.75rem, 2vw, 1rem);
+  font-size: clamp(0.7rem, 1.8vw, 0.95rem);
   will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  overflow: hidden;
 }
 
 .board-cell.selected {
@@ -574,6 +586,14 @@ button:disabled {
     flex: 1;
   }
 
+  .board[data-size="7"] {
+    max-width: min(420px, 100%);
+  }
+
+  .board[data-size="9"] {
+    max-width: min(380px, 100%);
+  }
+
   .modal-content {
     padding: 24px;
     margin: 16px;
@@ -629,6 +649,26 @@ button:disabled {
 
   .board {
     padding: clamp(6px, 1.5vw, 12px);
+  }
+
+  .board[data-size="7"] {
+    max-width: 100%;
+    gap: 2px;
+    padding: 6px;
+  }
+
+  .board[data-size="9"] {
+    max-width: 100%;
+    gap: 2px;
+    padding: 4px;
+  }
+
+  .board[data-size="7"] .board-cell,
+  .board[data-size="9"] .board-cell {
+    min-height: 24px;
+    font-size: 0.65rem;
+    padding: 2px;
+    border-radius: 6px;
   }
 
   .status-card,
