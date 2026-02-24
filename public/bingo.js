@@ -536,9 +536,9 @@ function applyState(nextState) {
 
   // Reset modal and victory flag when transitioning from game-over to new game
   if (wasGameOver && !isNowGameOver && elements.winnerModal) {
-    elements.winnerModal.removeAttribute('data-shown');
     elements.winnerModal.style.display = "none";
     state.hasSeenVictory = false;
+    console.log('Game reset, hasSeenVictory cleared');
   }
 
   if (nextState.boardSize && nextState.boardSize !== state.boardSize) {
@@ -604,12 +604,14 @@ function renderStatus() {
       elements.newGame.textContent = "Start next game";
       elements.newGame.disabled = false;
     }
-    // Show modal if there's a winner and player hasn't seen it yet
+    // Show modal for all players when there's a winner
     const isPlayerWinner = state.winnerIds.includes(state.playerId);
     if (winners.length > 0 && !state.hasSeenVictory && elements.winnerModal) {
-      console.log('Victory detected:', { isPlayerWinner, winners: winners.map(w => w.name), playerId: state.playerId, winnerIds: state.winnerIds });
+      console.log('Victory modal triggered:', { isPlayerWinner, winners: winners.map(w => w.name), playerId: state.playerId, winnerIds: state.winnerIds });
       state.hasSeenVictory = true;
       showWinnerCelebration(winners, isMultipleWinners, isPlayerWinner);
+    } else if (winners.length > 0 && state.hasSeenVictory) {
+      console.log('Winner already shown, keeping modal visible if it was displayed');
     }
   } else if (!allReady()) {
     elements.turnStatus.textContent = "Waiting for all players to be ready.";
@@ -1019,9 +1021,16 @@ function showWinnerCelebration(winners, isMultipleWinners, isPlayerWinner) {
     }
   }
   
-  elements.winnerModal.style.display = "flex";
-  console.log('Modal display set to flex');
-  playConfetti();
+  if (elements.winnerModal) {
+    elements.winnerModal.style.display = "flex";
+    elements.winnerModal.style.zIndex = "99999";
+    console.log('Modal display set to flex with zIndex 99999');
+  }
+  try {
+    playConfetti();
+  } catch (e) {
+    console.error('Confetti error:', e);
+  }
 }
 
 function closeWinnerModal() {
