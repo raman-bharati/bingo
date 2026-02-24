@@ -1,6 +1,5 @@
-const CACHE_NAME = 'bingo-v1';
+const CACHE_NAME = 'bingo-v2';
 const ASSETS = [
-  '/bingo',
   '/bingo.css',
   '/bingo.js',
 ];
@@ -33,6 +32,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (event.request.mode === 'navigate') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       // Return cached response if available
@@ -42,8 +46,9 @@ self.addEventListener('fetch', (event) => {
 
       // Otherwise fetch from network
       return fetch(event.request).then((response) => {
+        const contentType = response?.headers?.get('content-type') || '';
         // Don't cache API calls or non-OK responses
-        if (!response || response.status !== 200 || event.request.url.includes('/bingo/room/')) {
+        if (!response || response.status !== 200 || contentType.includes('text/html') || event.request.url.includes('/bingo/room/')) {
           return response;
         }
 

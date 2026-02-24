@@ -34,7 +34,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/bingo.css">
+  <link rel="stylesheet" href="<?= base_url('bingo.css?v=' . filemtime(FCPATH . 'bingo.css')) ?>">
   
   <!-- Structured Data / JSON-LD -->
   <script type="application/ld+json">
@@ -206,6 +206,6 @@
       // Optionally send to error tracking service
     });
   </script>
-  <script src="/bingo.js"></script>
+  <script src="<?= base_url('bingo.js?v=' . filemtime(FCPATH . 'bingo.js')) ?>"></script>
 </body>
 </html>
