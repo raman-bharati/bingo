@@ -1046,10 +1046,14 @@ function toggleRule() {
 }
 
 function updateToggleRuleButton() {
-  if (!elements.toggleRule) return;
+  if (!elements.toggleRule || !elements.leaveRoom) {
+    console.warn("Toggle or leave buttons not found in DOM");
+    return;
+  }
   
   if (state.roomCode) {
-    elements.toggleRule.style.display = "inline-block";
+    elements.toggleRule.style.display = "block";
+    elements.leaveRoom.style.display = "block";
     if (state.callerWinsOnly) {
       elements.toggleRule.textContent = "Rule: Caller Wins Only ✓";
       elements.toggleRule.classList.add("rule-active");
@@ -1063,15 +1067,7 @@ function updateToggleRuleButton() {
     elements.toggleRule.disabled = !canToggle;
   } else {
     elements.toggleRule.style.display = "none";
-  }
-  
-  // Update leave room button visibility
-  if (elements.leaveRoom) {
-    if (state.roomCode) {
-      elements.leaveRoom.style.display = "inline-block";
-    } else {
-      elements.leaveRoom.style.display = "none";
-    }
+    elements.leaveRoom.style.display = "none";
   }
 }
 
