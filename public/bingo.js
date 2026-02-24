@@ -604,11 +604,12 @@ function renderStatus() {
       elements.newGame.textContent = "Start next game";
       elements.newGame.disabled = false;
     }
-    // Show modal if current player is a winner and hasn't seen it yet
+    // Show modal if there's a winner and player hasn't seen it yet
     const isPlayerWinner = state.winnerIds.includes(state.playerId);
-    if (winners.length > 0 && isPlayerWinner && !state.hasSeenVictory && elements.winnerModal) {
+    if (winners.length > 0 && !state.hasSeenVictory && elements.winnerModal) {
+      console.log('Victory detected:', { isPlayerWinner, winners: winners.map(w => w.name), playerId: state.playerId, winnerIds: state.winnerIds });
       state.hasSeenVictory = true;
-      showWinnerCelebration(winners, isMultipleWinners);
+      showWinnerCelebration(winners, isMultipleWinners, isPlayerWinner);
     }
   } else if (!allReady()) {
     elements.turnStatus.textContent = "Waiting for all players to be ready.";
@@ -971,8 +972,13 @@ function isInCompletedLine(r, c) {
   return null;
 }
 
-function showWinnerCelebration(winners, isMultipleWinners) {
-  if (!elements.winnerModal || !elements.winnerName || !elements.winnerMessage) return;
+function showWinnerCelebration(winners, isMultipleWinners, isPlayerWinner) {
+  if (!elements.winnerModal || !elements.winnerName || !elements.winnerMessage) {
+    console.warn('Modal elements missing');
+    return;
+  }
+  
+  console.log('Showing winner modal:', { winners: winners.map(w => w.name), isMultipleWinners, isPlayerWinner });
   
   if (isMultipleWinners) {
     // Multiple winners (draw)
@@ -993,18 +999,28 @@ function showWinnerCelebration(winners, isMultipleWinners) {
       });
       elements.winnersList.appendChild(fragment);
     }
+  } else if (isPlayerWinner) {
+    // Current player won
+    elements.winnerName.textContent = "You won!";
+    elements.winnerMessage.textContent = "🎉 Congratulations! 🎉";
+    
+    // Hide winners list for single winner
+    if (elements.winnersList) {
+      elements.winnersList.style.display = "none";
+    }
   } else {
-    // Single winner
+    // Someone else won
     elements.winnerName.textContent = winners[0].name;
     elements.winnerMessage.textContent = "🎉 WINS! 🎉";
     
-    // Hide winners list for single winner
+    // Hide winners list
     if (elements.winnersList) {
       elements.winnersList.style.display = "none";
     }
   }
   
   elements.winnerModal.style.display = "flex";
+  console.log('Modal display set to flex');
   playConfetti();
 }
 
