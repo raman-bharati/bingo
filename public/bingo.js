@@ -26,6 +26,8 @@ const state = {
   lastStateHash: "",
   renderThrottled: false,
   isSubmitting: false, // Prevent double submissions
+  hasSeenVictory: false, // Track if current player has seen victory modal for current game
+  callerWinsOnly: false, // Game rule: only caller can win
 };
 
 const elements = {
@@ -53,6 +55,8 @@ const elements = {
   winnersList: document.getElementById("winnersList"),
   leaderboard: document.getElementById("leaderboard"),
   boardDirtyIndicator: document.getElementById("boardDirtyIndicator"),
+  toggleRule: document.getElementById("toggleRule"),
+  leaveRoom: document.getElementById("leaveRoom"),
 };
 
 const storage = {
@@ -74,6 +78,12 @@ function init() {
   elements.clearBoard.addEventListener("click", clearBoard);
   elements.lockBoard.addEventListener("click", lockBoard);
   elements.newGame.addEventListener("click", handleGameButton);
+  if (elements.toggleRule) {
+    elements.toggleRule.addEventListener("click", toggleRule);
+  }
+  if (elements.leaveRoom) {
+    elements.leaveRoom.addEventListener("click", leaveRoom);
+  }
   document.getElementById("closeWinnerModal").addEventListener("click", closeWinnerModal);
   document.addEventListener("keydown", handleKeyInput);
 }
@@ -522,11 +532,13 @@ function applyState(nextState) {
   state.winnerIds = nextState.winnerIds || [];
   state.lastCall = nextState.lastCall || null;
   state.started = !!nextState.started;
+  state.callerWinsOnly = !!nextState.callerWinsOnly;
 
-  // Reset modal when transitioning from game-over to new game
+  // Reset modal and victory flag when transitioning from game-over to new game
   if (wasGameOver && !isNowGameOver && elements.winnerModal) {
     elements.winnerModal.removeAttribute('data-shown');
     elements.winnerModal.style.display = "none";
+    state.hasSeenVictory = false;
   }
 
   if (nextState.boardSize && nextState.boardSize !== state.boardSize) {
@@ -550,6 +562,7 @@ function applyState(nextState) {
   renderStatus();
   renderLeaderboard();
   updateLockButton();
+  updateToggleRuleButton();
   updateBoardActions();
 }
 
@@ -591,8 +604,10 @@ function renderStatus() {
       elements.newGame.textContent = "Start next game";
       elements.newGame.disabled = false;
     }
-    // Only show modal if it hasn't been shown for this game
-    if (winners.length > 0 && elements.winnerModal && elements.winnerModal.dataset.shown === undefined) {
+    // Show modal if current player is a winner and hasn't seen it yet
+    const isPlayerWinner = state.winnerIds.includes(state.playerId);
+    if (winners.length > 0 && isPlayerWinner && !state.hasSeenVictory && elements.winnerModal) {
+      state.hasSeenVictory = true;
       showWinnerCelebration(winners, isMultipleWinners);
     }
   } else if (!allReady()) {
@@ -647,6 +662,20 @@ function renderStatus() {
     meta.textContent = `${readyMarker}${winsText}`;
     row.appendChild(label);
     row.appendChild(meta);
+    
+    // Add kick button if not this player and in a room
+    if (player.id !== state.playerId && state.roomCode) {
+      const kickBtn = document.createElement("button");
+      kickBtn.textContent = "✕";
+      kickBtn.className = "kick-btn";
+      kickBtn.title = "Kick player";
+      kickBtn.onclick = (e) => {
+        e.stopPropagation();
+        kickPlayer(player.id, player.name);
+      };
+      row.appendChild(kickBtn);
+    }
+    
     playerFragment.appendChild(row);
   });
   
@@ -761,6 +790,7 @@ function startNextGame() {
       state.selectedCell = null;
       state.inputBuffer = "";
       state.boardDirty = false;
+      state.hasSeenVictory = false;
       // Reset modal for new game
       if (elements.winnerModal) {
         elements.winnerModal.removeAttribute('data-shown');
@@ -974,7 +1004,6 @@ function showWinnerCelebration(winners, isMultipleWinners) {
     }
   }
   
-  elements.winnerModal.dataset.shown = "true";
   elements.winnerModal.style.display = "flex";
   playConfetti();
 }
@@ -982,10 +1011,154 @@ function showWinnerCelebration(winners, isMultipleWinners) {
 function closeWinnerModal() {
   if (!elements.winnerModal) return;
   elements.winnerModal.style.display = "none";
-  // Mark modal as explicitly closed for this game
-  elements.winnerModal.dataset.shown = "closed";
   renderStatus();
   updateLockButton();
+}
+
+function toggleRule() {
+  if (!state.roomCode || !state.playerId) {
+    return;
+  }
+  if (state.isSubmitting) {
+    return;
+  }
+  state.isSubmitting = true;
+  fetch(`${BASE_URL}/bingo/room/toggle-rule`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      roomCode: state.roomCode,
+      playerId: state.playerId,
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) {
+        alert(data.error || "Unable to toggle rule.");
+        return;
+      }
+      applyState(data.state);
+    })
+    .catch(() => alert("Unable to toggle rule. Please check your connection."))
+    .finally(() => {
+      state.isSubmitting = false;
+    });
+}
+
+function updateToggleRuleButton() {
+  if (!elements.toggleRule) return;
+  
+  if (state.roomCode) {
+    elements.toggleRule.style.display = "inline-block";
+    if (state.callerWinsOnly) {
+      elements.toggleRule.textContent = "Rule: Caller Wins Only ✓";
+      elements.toggleRule.classList.add("rule-active");
+    } else {
+      elements.toggleRule.textContent = "Rule: All Can Win";
+      elements.toggleRule.classList.remove("rule-active");
+    }
+    
+    // Disable during active game
+    const canToggle = !state.started || state.winnerIds.length > 0;
+    elements.toggleRule.disabled = !canToggle;
+  } else {
+    elements.toggleRule.style.display = "none";
+  }
+  
+  // Update leave room button visibility
+  if (elements.leaveRoom) {
+    if (state.roomCode) {
+      elements.leaveRoom.style.display = "inline-block";
+    } else {
+      elements.leaveRoom.style.display = "none";
+    }
+  }
+}
+
+function kickPlayer(targetPlayerId, playerName) {
+  if (!confirm(`Kick ${playerName} from the room?`)) {
+    return;
+  }
+  
+  if (state.isSubmitting) {
+    return;
+  }
+  state.isSubmitting = true;
+  
+  fetch(`${BASE_URL}/bingo/room/kick`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      roomCode: state.roomCode,
+      playerId: state.playerId,
+      targetPlayerId: targetPlayerId,
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) {
+        alert(data.error || "Unable to kick player.");
+        return;
+      }
+      applyState(data.state);
+    })
+    .catch(() => alert("Unable to kick player. Please check your connection."))
+    .finally(() => {
+      state.isSubmitting = false;
+    });
+}
+
+function leaveRoom() {
+  if (!confirm("Leave this room? You will need to rejoin to continue playing.")) {
+    return;
+  }
+  
+  if (state.isSubmitting) {
+    return;
+  }
+  state.isSubmitting = true;
+  
+  fetch(`${BASE_URL}/bingo/room/leave`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      roomCode: state.roomCode,
+      playerId: state.playerId,
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) {
+        alert(data.error || "Unable to leave room.");
+        return;
+      }
+      // Reset to initial state
+      if (state.pollTimer) {
+        clearTimeout(state.pollTimer);
+        state.pollTimer = null;
+      }
+      state.roomCode = "";
+      state.playerId = "";
+      state.players = [];
+      state.calledNumbers = [];
+      state.winnerIds = [];
+      state.started = false;
+      state.lastCall = null;
+      state.hasSeenVictory = false;
+      state.callerWinsOnly = false;
+      
+      // Reset UI
+      elements.roomCode.value = "";
+      renderStatus();
+      updateToggleRuleButton();
+      updateLockButton();
+      
+      alert("You have left the room.");
+    })
+    .catch(() => alert("Unable to leave room. Please check your connection."))
+    .finally(() => {
+      state.isSubmitting = false;
+    });
 }
 
 function playConfetti() {

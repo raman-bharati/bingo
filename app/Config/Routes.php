@@ -15,6 +15,9 @@ $routes->get('bingo/room/state', 'BingoController::getState');
 $routes->post('bingo/room/call', 'BingoController::callNumber');
 $routes->post('bingo/room/start', 'BingoController::startGame');
 $routes->post('bingo/room/new', 'BingoController::newGame');
+$routes->post('bingo/room/toggle-rule', 'BingoController::toggleRule');
+$routes->post('bingo/room/kick', 'BingoController::kickPlayer');
+$routes->post('bingo/room/leave', 'BingoController::leaveRoom');
 
 $routes->get('esewa', 'EsewaController::index');
 $routes->post('esewa/checkout', 'EsewaController::checkout');

@@ -62,6 +62,7 @@ class BingoController extends BaseController
             'lastCall' => null,
             'started' => false,
             'roomWins' => [],
+            'callerWinsOnly' => false,
         ];
 
         $this->writeRoom($roomCode, $room);
@@ -254,9 +255,18 @@ class BingoController extends BaseController
 
         // Only mark winners if no previous winners exist (first time reaching 5 lines)
         if (empty($room['winnerIds']) && !empty($playersAt5Lines)) {
-            $room['winnerIds'] = $playersAt5Lines;
+            // Apply caller-wins-only rule if enabled
+            $callerWinsOnly = !empty($room['callerWinsOnly']);
+            if ($callerWinsOnly) {
+                // Only the caller can win
+                $room['winnerIds'] = in_array($playerId, $playersAt5Lines, true) ? [$playerId] : [];
+            } else {
+                // All players who reached 5 lines win
+                $room['winnerIds'] = $playersAt5Lines;
+            }
+            
             // Increment wins for all winners
-            foreach ($playersAt5Lines as $winnerId) {
+            foreach ($room['winnerIds'] as $winnerId) {
                 $winnerIndex = $this->findPlayerIndex($room, $winnerId);
                 if ($winnerIndex !== -1) {
                     $room['players'][$winnerIndex]['wins'] = (int)($room['players'][$winnerIndex]['wins'] ?? 0) + 1;
@@ -625,6 +635,7 @@ class BingoController extends BaseController
             'lastCall' => $room['lastCall'],
             'board' => $playerBoard,
             'started' => $started,
+            'callerWinsOnly' => !empty($room['callerWinsOnly']),
         ];
     }
 
@@ -657,5 +668,161 @@ class BingoController extends BaseController
     private function newPlayerId(): string
     {
         return 'p_' . bin2hex(random_bytes(8));
+    }
+
+    public function toggleRule(): ResponseInterface
+    {
+        $payload = $this->request->getJSON(true) ?? [];
+        $roomCode = $this->normalizeRoomCode($payload['roomCode'] ?? '');
+        $playerId = (string)($payload['playerId'] ?? '');
+
+        if ($roomCode === '' || $playerId === '') {
+            return $this->fail('Room code and player ID are required.', 400);
+        }
+
+        $room = $this->readRoom($roomCode);
+        if ($room === null) {
+            return $this->fail('Room not found.', 404);
+        }
+
+        $playerIndex = $this->findPlayerIndex($room, $playerId);
+        if ($playerIndex === -1) {
+            return $this->fail('Player not found.', 404);
+        }
+
+        // Only allow rule change before game starts or after game ends
+        if (!empty($room['started']) && empty($room['winnerIds'])) {
+            return $this->fail('Cannot change rule during an active game.', 409);
+        }
+
+        $room['callerWinsOnly'] = !($room['callerWinsOnly'] ?? false);
+        $this->writeRoom($roomCode, $room);
+
+        return $this->respond([
+            'ok' => true,
+            'state' => $this->buildState($room, $playerId),
+        ]);
+    }
+
+    public function kickPlayer(): ResponseInterface
+    {
+        $payload = $this->request->getJSON(true) ?? [];
+        $roomCode = $this->normalizeRoomCode($payload['roomCode'] ?? '');
+        $playerId = (string)($payload['playerId'] ?? '');
+        $targetPlayerId = (string)($payload['targetPlayerId'] ?? '');
+
+        if ($roomCode === '' || $playerId === '' || $targetPlayerId === '') {
+            return $this->fail('Room code, player ID, and target player ID are required.', 400);
+        }
+
+        $room = $this->readRoom($roomCode);
+        if ($room === null) {
+            return $this->fail('Room not found.', 404);
+        }
+
+        $playerIndex = $this->findPlayerIndex($room, $playerId);
+        if ($playerIndex === -1) {
+            return $this->fail('Player not found.', 404);
+        }
+
+        $targetIndex = $this->findPlayerIndex($room, $targetPlayerId);
+        if ($targetIndex === -1) {
+            return $this->fail('Target player not found.', 404);
+        }
+
+        if ($playerId === $targetPlayerId) {
+            return $this->fail('Cannot kick yourself. Use leave room instead.', 400);
+        }
+
+        // Remove the player
+        array_splice($room['players'], $targetIndex, 1);
+
+        // Adjust turn index if needed
+        if (count($room['players']) === 0) {
+            $room['turnIndex'] = 0;
+            $room['startIndex'] = 0;
+        } else {
+            // If removed player was before or at current turn, adjust turnIndex
+            if ($targetIndex <= (int)$room['turnIndex']) {
+                $room['turnIndex'] = max(0, (int)$room['turnIndex'] - 1);
+            }
+            // Ensure turnIndex is within bounds
+            if ((int)$room['turnIndex'] >= count($room['players'])) {
+                $room['turnIndex'] = 0;
+            }
+            if ((int)$room['startIndex'] >= count($room['players'])) {
+                $room['startIndex'] = 0;
+            }
+        }
+
+        // Remove from winners if they were a winner
+        $room['winnerIds'] = array_values(array_filter($room['winnerIds'] ?? [], function($id) use ($targetPlayerId) {
+            return $id !== $targetPlayerId;
+        }));
+
+        $this->writeRoom($roomCode, $room);
+
+        return $this->respond([
+            'ok' => true,
+            'state' => $this->buildState($room, $playerId),
+        ]);
+    }
+
+    public function leaveRoom(): ResponseInterface
+    {
+        $payload = $this->request->getJSON(true) ?? [];
+        $roomCode = $this->normalizeRoomCode($payload['roomCode'] ?? '');
+        $playerId = (string)($payload['playerId'] ?? '');
+
+        if ($roomCode === '' || $playerId === '') {
+            return $this->fail('Room code and player ID are required.', 400);
+        }
+
+        $room = $this->readRoom($roomCode);
+        if ($room === null) {
+            return $this->fail('Room not found.', 404);
+        }
+
+        $playerIndex = $this->findPlayerIndex($room, $playerId);
+        if ($playerIndex === -1) {
+            return $this->fail('Player not found.', 404);
+        }
+
+        // Remove the player
+        array_splice($room['players'], $playerIndex, 1);
+
+        // Adjust turn index if needed
+        if (count($room['players']) === 0) {
+            // Last player left - could optionally delete room here
+            $room['turnIndex'] = 0;
+            $room['startIndex'] = 0;
+            $room['started'] = false;
+            $room['winnerIds'] = [];
+            $room['calledNumbers'] = [];
+        } else {
+            // If leaving player was before or at current turn, adjust turnIndex
+            if ($playerIndex <= (int)$room['turnIndex']) {
+                $room['turnIndex'] = max(0, (int)$room['turnIndex'] - 1);
+            }
+            // Ensure turnIndex is within bounds
+            if ((int)$room['turnIndex'] >= count($room['players'])) {
+                $room['turnIndex'] = 0;
+            }
+            if ((int)$room['startIndex'] >= count($room['players'])) {
+                $room['startIndex'] = 0;
+            }
+        }
+
+        // Remove from winners if they were a winner
+        $room['winnerIds'] = array_values(array_filter($room['winnerIds'] ?? [], function($id) use ($playerId) {
+            return $id !== $playerId;
+        }));
+
+        $this->writeRoom($roomCode, $room);
+
+        return $this->respond([
+            'ok' => true,
+            'left' => true,
+        ]);
     }
 }

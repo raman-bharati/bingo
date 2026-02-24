@@ -118,6 +118,12 @@ button.ghost {
   box-shadow: none;
 }
 
+button.ghost.rule-active {
+  background: #e8f5e9;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
 button.full {
   width: 100%;
 }
@@ -345,10 +351,33 @@ button:disabled {
   background: #fef1e0;
   padding: 8px 10px;
   border-radius: 10px;
+  position: relative;
 }
 
 .player-row span {
   font-size: 0.9rem;
+}
+
+.kick-btn {
+  background: #ffebe6;
+  color: #c94a32;
+  border: 1px solid rgba(201, 74, 50, 0.2);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.kick-btn:hover {
+  background: #ffd4cc;
+  border-color: #c94a32;
+  transform: scale(1.05);
+}
+
+.kick-btn:active {
+  transform: scale(0.95);
 }
 
 .call-grid {

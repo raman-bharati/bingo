@@ -147,6 +147,8 @@
           <div class="leaderboard-title">🏆 Leaderboard</div>
           <div id="leaderboard" class="leaderboard-list"></div>
           <button id="newGame" class="ghost full" disabled>Start game</button>
+          <button id="toggleRule" class="ghost full" style="display: none;">Rule: All Can Win</button>
+          <button id="leaveRoom" class="ghost full" style="display: none;">Leave Room</button>
         </div>
         <div class="howto-card">
           <div class="howto-title">📖 How to Play</div>
@@ -156,6 +158,7 @@
             <li>Take turns calling numbers by clicking them</li>
             <li>Complete 5 lines first (rows/columns/diagonals) to win!</li>
             <li>Completed lines turn green</li>
+            <li><strong>Caller Wins Only:</strong> Only the player calling can win on their turn</li>
           </ul>
         </div>
       </div>
