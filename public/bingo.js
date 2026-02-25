@@ -276,11 +276,17 @@ function updateLockButton() {
 function updateBoardActions() {
   const me = state.players.find((player) => player.id === state.playerId);
   const isLocked = !!(me && me.ready);
+  const gameInProgress = state.calledNumbers.length > 0 && state.winnerIds.length === 0;
+  
   if (elements.autoFill) {
     elements.autoFill.disabled = isLocked;
   }
   if (elements.clearBoard) {
     elements.clearBoard.disabled = isLocked;
+  }
+  if (elements.boardSize) {
+    // Disable board size change only during active game, allow after game is over
+    elements.boardSize.disabled = gameInProgress;
   }
 }
 
@@ -298,10 +304,27 @@ function handleBoardSizeChange() {
     return;
   }
 
-  if (state.roomCode && state.calledNumbers.length > 0) {
-    alert("You can't change the board size once the game has started.");
+  // Allow size change if game hasn't started or if game is over (before new game)
+  const isGameOver = state.winnerIds.length > 0;
+  const gameInProgress = state.calledNumbers.length > 0 && !isGameOver;
+  
+  if (state.roomCode && gameInProgress) {
+    alert("You can't change the board size while a game is in progress.");
     elements.boardSize.value = String(state.boardSize);
     return;
+  }
+
+  // If changing board size after game is over, reset win counters
+  if (state.roomCode && isGameOver && nextSize !== state.boardSize) {
+    if (!confirm("Changing board size will reset all win counters. Continue?")) {
+      elements.boardSize.value = String(state.boardSize);
+      return;
+    }
+    // Reset win counters for all players
+    state.players.forEach((player) => {
+      player.wins = 0;
+    });
+    renderLeaderboard();
   }
 
   setBoardSize(nextSize, true);
