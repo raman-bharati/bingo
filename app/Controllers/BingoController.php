@@ -53,6 +53,7 @@ class BingoController extends BaseController
         $room = [
             'roomCode' => $roomCode,
             'createdAt' => time(),
+            'creatorId' => $playerId,
             'boardSize' => $boardSize,
             'players' => [$player],
             'calledNumbers' => [],
@@ -102,6 +103,13 @@ class BingoController extends BaseController
 
         if (!empty($room['started'])) {
             return $this->fail('Game already started.', 409);
+        }
+
+        // Check if player name already exists in the room
+        foreach ($room['players'] as $existingPlayer) {
+            if (strtolower(trim($existingPlayer['name'])) === strtolower($name)) {
+                return $this->fail('A player with this name is already in the room.', 409);
+            }
         }
 
         $playerId = $this->newPlayerId();
@@ -625,6 +633,7 @@ class BingoController extends BaseController
 
         return [
             'roomCode' => $room['roomCode'],
+            'creatorId' => $room['creatorId'] ?? null,
             'boardSize' => (int)($room['boardSize'] ?? 5),
             'maxNumber' => $this->maxNumberForRoom($room),
             'players' => $players,
@@ -723,6 +732,12 @@ class BingoController extends BaseController
         $playerIndex = $this->findPlayerIndex($room, $playerId);
         if ($playerIndex === -1) {
             return $this->fail('Player not found.', 404);
+        }
+
+        // Only room creator can kick players
+        $creatorId = $room['creatorId'] ?? null;
+        if ($creatorId !== null && $playerId !== $creatorId) {
+            return $this->fail('Only the room creator can kick players.', 403);
         }
 
         $targetIndex = $this->findPlayerIndex($room, $targetPlayerId);

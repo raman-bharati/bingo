@@ -6,6 +6,7 @@ const state = {
   roomCode: "",
   playerId: "",
   playerName: "",
+  creatorId: "",
   boardSize: DEFAULT_SIZE,
   maxNumber: DEFAULT_SIZE * DEFAULT_SIZE,
   board: createEmptyBoard(DEFAULT_SIZE),
@@ -103,6 +104,9 @@ function renderBoard() {
   elements.board.style.position = "relative";
   
   const fragment = document.createDocumentFragment();
+  const playerIndex = state.players.findIndex((p) => p.id === state.playerId);
+  const isMyTurn = state.started && playerIndex === state.turnIndex;
+  const isGameOver = state.winnerIds.length > 0;
   
   state.board.forEach((row, r) => {
     row.forEach((cell, c) => {
@@ -170,6 +174,17 @@ function handleCellCall(row, col) {
   if (!state.started || !state.roomCode || !state.playerId) {
     return;
   }
+  
+  // Check if it's the player's turn
+  const playerIndex = state.players.findIndex((p) => p.id === state.playerId);
+  const isMyTurn = playerIndex === state.turnIndex;
+  
+  if (!isMyTurn) {
+    // Silently ignore clicks when not player's turn instead of showing alert
+    console.log('Not your turn - click ignored');
+    return;
+  }
+  
   const number = state.board[row][col];
   if (!Number.isInteger(number) || state.calledNumbers.includes(number)) {
     return;
@@ -408,6 +423,8 @@ function handleRoomAction(action) {
           errorMsg = "This game has already started. You can't join once a game is in progress.";
         } else if (errorMsg === "Board size does not match the room.") {
           errorMsg = "Board size mismatch. Please select the same board size as the room.";
+        } else if (errorMsg === "A player with this name is already in the room.") {
+          errorMsg = "A player with this name is already in the room. Please choose a different name.";
         }
         alert(errorMsg);
         console.error(`Room ${action} error:`, data);
@@ -520,6 +537,7 @@ function startPolling() {
 
 function applyState(nextState) {
   state.roomCode = nextState.roomCode || state.roomCode;
+  state.creatorId = nextState.creatorId || state.creatorId;
   state.players = nextState.players || [];
   state.calledNumbers = nextState.calledNumbers || [];
   state.turnIndex = nextState.turnIndex ?? 0;
@@ -606,12 +624,19 @@ function renderStatus() {
     }
     // Show modal for all players when there's a winner
     const isPlayerWinner = state.winnerIds.includes(state.playerId);
+    console.log('Game over check:', { 
+      winnerCount: winners.length, 
+      hasSeenVictory: state.hasSeenVictory, 
+      modalExists: !!elements.winnerModal,
+      isPlayerWinner,
+      winnerIds: state.winnerIds
+    });
     if (winners.length > 0 && !state.hasSeenVictory && elements.winnerModal) {
-      console.log('Victory modal triggered:', { isPlayerWinner, winners: winners.map(w => w.name), playerId: state.playerId, winnerIds: state.winnerIds });
+      console.log('🎉 Triggering victory modal for', isPlayerWinner ? 'winner' : 'spectator');
       state.hasSeenVictory = true;
       showWinnerCelebration(winners, isMultipleWinners, isPlayerWinner);
     } else if (winners.length > 0 && state.hasSeenVictory) {
-      console.log('Winner already shown, keeping modal visible if it was displayed');
+      console.log('Victory already shown to this player');
     }
   } else if (!allReady()) {
     elements.turnStatus.textContent = "Waiting for all players to be ready.";
@@ -666,8 +691,9 @@ function renderStatus() {
     row.appendChild(label);
     row.appendChild(meta);
     
-    // Add kick button if not this player and in a room
-    if (player.id !== state.playerId && state.roomCode) {
+    // Add kick button only if current player is the room creator and not kicking themselves
+    const isCreator = state.playerId === state.creatorId;
+    if (player.id !== state.playerId && state.roomCode && isCreator) {
       const kickBtn = document.createElement("button");
       kickBtn.textContent = "✕";
       kickBtn.className = "kick-btn";
@@ -746,9 +772,11 @@ function callNumber(number) {
     .then((data) => {
       if (!data.ok) {
         let errorMsg = data.error || "Something went wrong";
-        // Add helpful suggestions
+        // Add helpful suggestions (but "Not your turn" shouldn't happen anymore since we prevent clicks)
         if (errorMsg === "Not your turn.") {
-          errorMsg = "Please wait for your turn to call a number.";
+          // This shouldn't happen with client-side prevention, but log it
+          console.warn("Server rejected turn (client check failed):", errorMsg);
+          return;
         } else if (errorMsg === "Number already called.") {
           errorMsg = "This number has already been called. Pick a different one.";
         } else if (errorMsg === "Game is over.") {
@@ -1022,9 +1050,12 @@ function showWinnerCelebration(winners, isMultipleWinners, isPlayerWinner) {
   }
   
   if (elements.winnerModal) {
+    console.log('🎯 Setting modal visible:', { currentDisplay: elements.winnerModal.style.display });
     elements.winnerModal.style.display = "flex";
     elements.winnerModal.style.zIndex = "99999";
-    console.log('Modal display set to flex with zIndex 99999');
+    console.log('✅ Modal display set to flex with zIndex 99999', { newDisplay: elements.winnerModal.style.display });
+  } else {
+    console.error('❌ winnerModal element not found!');
   }
   try {
     playConfetti();
