@@ -380,6 +380,7 @@ function setBoardSize(size, resetBoard) {
   renderBoard();
   renderPicker();
   updateLockButton();
+  updateBoardActions();
 }
 
 function handleKeyInput(event) {
@@ -621,10 +622,9 @@ function applyState(nextState) {
 
   if (nextState.boardSize && nextState.boardSize !== state.boardSize) {
     setBoardSize(nextState.boardSize, true);
-  }
-
-  if (nextState.maxNumber && Number.isInteger(nextState.maxNumber)) {
-    state.maxNumber = nextState.maxNumber;
+  } else if (nextState.boardSize) {
+    // Ensure maxNumber stays in sync with boardSize even if size didn't change
+    state.maxNumber = nextState.boardSize * nextState.boardSize;
   }
 
   if (nextState.board) {
