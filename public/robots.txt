@@ -3,4 +3,4 @@ Allow: /
 Disallow: /writable/
 Disallow: /app/
 
-Sitemap: https://your-domain.com/sitemap.xml
+Sitemap: https://ramanbharati.com.np/index.php/bingo/sitemap.xml

@@ -65,104 +65,131 @@
 </head>
 <body>
   <main class="page">
-    <section class="hero">
+    <!-- Header -->
+    <header class="main-header">
       <div>
         <div class="eyebrow">Multiplayer Bingo</div>
         <h1>Bingo in real time.</h1>
         <p class="lede">Build your board, take turns calling numbers, and claim five lines first.</p>
       </div>
-      <div class="panel" id="roomPanel">
-        <div class="panel-title">Join a room</div>
-        <label class="field">
-          <span>Name</span>
-          <input id="playerName" type="text" placeholder="Your name">
-        </label>
-        <label class="field">
-          <span>Room code</span>
-          <input id="roomCode" type="text" placeholder="E.g. BINGO1" maxlength="8">
-        </label>
-        <label class="field">
-          <span>Board size</span>
-          <select id="boardSize">
-            <option value="5" selected>5 x 5</option>
-            <option value="7">7 x 7</option>
-            <option value="9">9 x 9</option>
-          </select>
-        </label>
-        <div class="actions">
-          <button id="createRoom" class="primary">Create room</button>
-          <button id="joinRoom" class="ghost">Join room</button>
-        </div>
-        <div class="hint">Share the room code with friends.</div>
-      </div>
-    </section>
+    </header>
 
-    <section class="board-section">
-      <div class="board-wrap">
-        <div class="board-header">
-          <div>
-            <div class="board-title-row">
-              <div class="board-title">Your board</div>
-              <span id="boardDirtyIndicator" class="board-dirty" aria-live="polite" hidden>editing…</span>
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Game Area (Center) -->
+      <section class="game-area">
+        <div class="board-wrap">
+          <div class="board-header">
+            <div>
+              <div class="board-title-row">
+                <div class="board-title">Your board</div>
+                <span id="boardDirtyIndicator" class="board-dirty" aria-live="polite" hidden>editing…</span>
+              </div>
+              <div class="board-sub">Auto-generate your board to get started.</div>
             </div>
-            <div class="board-sub">Pick numbers or auto-generate.</div>
+            <div class="board-actions">
+              <button id="autoFill">Auto-generate</button>
+              <button id="clearBoard" class="ghost">Clear</button>
+              <button id="lockBoard" class="primary" disabled>Lock & ready</button>
+            </div>
           </div>
-          <div class="board-actions">
-            <button id="autoFill">Auto-generate</button>
-            <button id="clearBoard" class="ghost">Clear</button>
-            <button id="lockBoard" class="primary" disabled>Lock & ready</button>
+          <div class="board" id="board"></div>
+
+          <!-- Game Status Info -->
+          <div class="game-status-grid">
+            <div class="status-card status-compact">
+              <div class="status-title">Room</div>
+              <div id="roomStatus" class="status-value">Not connected</div>
+              <div class="status-meta" id="turnStatus">Waiting...</div>
+            </div>
+            <div class="status-card status-compact">
+              <div class="status-title">Lines</div>
+              <div id="linesStatus" class="status-value">0</div>
+              <div id="lineLetters" class="status-meta">Need 5 lines to win.</div>
+            </div>
+            <div class="status-card status-compact">
+              <div class="status-title">Last call</div>
+              <div id="lastCall" class="status-value">None</div>
+              <div class="status-meta" id="callMeta">Waiting for first call.</div>
+            </div>
           </div>
         </div>
-        <div class="board" id="board"></div>
-        <div class="picker">
-          <div class="picker-title">Number picker</div>
-          <div class="picker-grid" id="picker"></div>
-        </div>
-      </div>
 
-      <div class="status-wrap">
-        <div class="status-card">
-          <div class="status-title">Room</div>
-          <div id="roomStatus" class="status-value">Not connected</div>
-          <div class="status-meta" id="turnStatus">Waiting...</div>
+        <!-- Players Panel (Always visible during game) -->
+        <div class="players-panel">
+          <div class="players-panel-header">
+            <div class="status-title">👥 Players</div>
+          </div>
+          <div id="playerList" class="players-list"></div>
         </div>
-        <div class="status-card">
-          <div class="status-title">Players</div>
-          <div id="playerList" class="players"></div>
-        </div>
-        <div class="status-card">
-          <div class="status-title">Lines</div>
-          <div id="linesStatus" class="status-value">0</div>
-          <div id="lineLetters" class="status-meta">Need 5 lines to win.</div>
-        </div>
-        <div class="status-card">
-          <div class="status-title">Last call</div>
-          <div id="lastCall" class="status-value">None</div>
-          <div class="status-meta" id="callMeta">Waiting for first call.</div>
-        </div>
-      </div>
+      </section>
 
-      <div class="leaderboard-wrap">
-        <div class="leaderboard-card">
-          <div class="leaderboard-title">🏆 Leaderboard</div>
-          <div id="leaderboard" class="leaderboard-list"></div>
-          <button id="newGame" class="ghost full" disabled>Start game</button>
-          <button id="toggleRule" class="ghost full" style="display: none;">Rule: All Can Win</button>
-          <button id="leaveRoom" class="ghost full" style="display: none;">Leave Room</button>
+      <!-- Right Sidebar -->
+      <aside class="sidebar" id="sidebar" aria-label="Game controls and information">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar" aria-expanded="true">
+          <span class="toggle-icon">‹</span>
+        </button>
+        
+        <div class="sidebar-content">
+          <!-- Join/Create Room Panel -->
+          <div class="sidebar-panel" id="roomPanel">
+            <div class="sidebar-panel-icon">🚪</div>
+            <div class="sidebar-panel-content">
+              <div class="panel-title">Join a room</div>
+              <label class="field">
+                <span>Name</span>
+                <input id="playerName" type="text" placeholder="Your name">
+              </label>
+              <label class="field">
+                <span>Room code</span>
+                <input id="roomCode" type="text" placeholder="E.g. BINGO1" maxlength="8">
+              </label>
+              <label class="field">
+                <span>Board size</span>
+                <select id="boardSize">
+                  <option value="5" selected>5 x 5</option>
+                  <option value="7">7 x 7</option>
+                  <option value="9">9 x 9</option>
+                </select>
+              </label>
+              <div class="actions">
+                <button id="createRoom" class="primary full">Create room</button>
+                <button id="joinRoom" class="ghost full">Join room</button>
+              </div>
+              <div class="hint">Share the room code with friends.</div>
+            </div>
+          </div>
+
+          <!-- Leaderboard Panel -->
+          <div class="sidebar-panel">
+            <div class="sidebar-panel-icon">🏆</div>
+            <div class="sidebar-panel-content">
+              <div class="panel-title">Leaderboard</div>
+              <div id="leaderboard" class="leaderboard-list"></div>
+              <button id="newGame" class="ghost full" disabled>Start game</button>
+              <button id="toggleRule" class="ghost full" style="display: none;">Rule: All Can Win</button>
+              <button id="leaveRoom" class="ghost full" style="display: none;">Leave Room</button>
+            </div>
+          </div>
+
+          <!-- How to Play Panel -->
+          <div class="sidebar-panel">
+            <div class="sidebar-panel-icon">📖</div>
+            <div class="sidebar-panel-content">
+              <div class="panel-title">How to Play</div>
+              <ul class="howto-list">
+                <li>Fill your board with unique numbers (1-25 for 5×5)</li>
+                <li>Lock your board when ready</li>
+                <li>Take turns calling numbers by clicking them</li>
+                <li>Complete 5 lines first (rows/columns/diagonals) to win!</li>
+                <li>Completed lines turn green</li>
+                <li><strong>Caller Wins Only:</strong> Only the player calling can win on their turn</li>
+              </ul>
+            </div>
+          </div>
         </div>
-        <div class="howto-card">
-          <div class="howto-title">📖 How to Play</div>
-          <ul class="howto-list">
-            <li>Fill your board with unique numbers (1-25 for 5×5)</li>
-            <li>Lock your board when ready</li>
-            <li>Take turns calling numbers by clicking them</li>
-            <li>Complete 5 lines first (rows/columns/diagonals) to win!</li>
-            <li>Completed lines turn green</li>
-            <li><strong>Caller Wins Only:</strong> Only the player calling can win on their turn</li>
-          </ul>
-        </div>
-      </div>
-    </section>
+      </aside>
+    </div>
 
     <footer class="footer">
       <div class="footer-content">
@@ -207,5 +234,6 @@
     });
   </script>
   <script src="<?= '/bingo.js?v=' . (filemtime(FCPATH . 'bingo.js') ?: '0') ?>"></script>
+  <script src="<?= '/bingo-sidebar.js?v=' . (filemtime(FCPATH . 'bingo-sidebar.js') ?: '0') ?>"></script>
 </body>
 </html>

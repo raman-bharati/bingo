@@ -21,17 +21,23 @@ body {
 }
 
 .page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px) clamp(36px, 8vw, 72px);
+  width: 100%;
+  min-height: 100vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.hero {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
-  align-items: center;
-  margin-bottom: 36px;
+.main-header {
+  padding: clamp(16px, 3vw, 24px) clamp(16px, 3vw, 32px);
+  margin-bottom: 0;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
 }
 
 .eyebrow {
@@ -53,17 +59,10 @@ h1 {
   max-width: 460px;
 }
 
-.panel {
-  background: var(--paper);
-  border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 18px 40px var(--shadow);
-  border: 1px solid rgba(31, 26, 20, 0.08);
-}
-
 .panel-title {
   font-weight: 600;
   margin-bottom: 12px;
+  font-size: 1.1rem;
 }
 
 .field {
@@ -139,24 +138,35 @@ button:disabled {
   color: rgba(31, 26, 20, 0.6);
 }
 
-.board-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  align-items: start;
+/* Game Area - Center Focus */
+.game-area {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  padding: clamp(12px, 2vw, 24px);
+  overflow-y: auto;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .board-wrap {
-  display: grid;
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  max-width: 100%;
-  min-width: 0;
+  max-width: 700px;
+  min-width: 320px;
 }
 
-.status-wrap,
-.leaderboard-wrap {
+.game-status-grid {
   display: grid;
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.status-compact {
+  padding: 12px;
 }
 
 .board-header {
@@ -277,41 +287,13 @@ button:disabled {
   box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.3);
 }
 
-.picker {
-  background: #fff7ec;
-  border-radius: 16px;
-  padding: clamp(8px, 2vw, 12px);
-  border: 1px solid rgba(31, 26, 20, 0.1);
-}
-
-.picker-title {
-  font-weight: 600;
-  margin-bottom: clamp(6px, 1vw, 8px);
-  font-size: clamp(0.9rem, 2vw, 1rem);
-}
-
-.picker-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(clamp(32px, 6vw, 42px), 1fr));
-  gap: clamp(4px, 1vw, 6px);
-  max-height: 220px;
-  overflow: auto;
-}
-
-.picker-button {
-  border-radius: 10px;
-  padding: clamp(4px, 1vw, 8px);
-  text-align: center;
-  font-weight: 600;
-  font-size: clamp(0.75rem, 1.5vw, 0.9rem);
-  border: 1px solid rgba(31, 26, 20, 0.15);
-  background: #fff;
-  cursor: pointer;
-}
-
+/* Number picker removed - players use auto-generate */
+.picker,
+.picker-title,
+.picker-grid,
+.picker-button,
 .picker-button.used {
-  opacity: 0.4;
-  cursor: not-allowed;
+  display: none;
 }
 
 .status-card {
@@ -343,19 +325,72 @@ button:disabled {
   gap: 8px;
 }
 
+.players-panel {
+  flex: 0 0 auto;
+  width: 280px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 24px var(--shadow);
+  border: 1px solid rgba(31, 26, 20, 0.08);
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  position: sticky;
+  top: 20px;
+}
+
+.players-panel-header {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid rgba(31, 26, 20, 0.08);
+}
+
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .player-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   background: #fef1e0;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: 10px;
   position: relative;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.player-row.active-turn {
+  background: #d4edda;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+}
+
+.player-row.active-turn::before {
+  content: "▶";
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4caf50;
+  font-size: 1rem;
+  animation: pulse-arrow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-arrow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .player-row span {
   font-size: 0.9rem;
+}
+
+.player-row span:first-child {
+  font-weight: 600;
 }
 
 .kick-btn {
@@ -404,26 +439,107 @@ button:disabled {
   border-color: var(--accent-dark);
 }
 
-.leaderboard-card {
-  background: #fff7ec;
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid rgba(31, 26, 20, 0.1);
+/* Right Sidebar */
+.sidebar {
+  position: relative;
+  width: 360px;
+  background: var(--paper);
+  border-left: 1px solid rgba(31, 26, 20, 0.1);
+  box-shadow: -4px 0 16px var(--shadow);
+  overflow-y: auto;
+  transition: width 0.3s ease, margin-right 0.3s ease;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed {
+  width:56px;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  left: -16px;
+  top: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px var(--shadow);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+  transform: scale(1.1);
+}
+
+.sidebar-toggle:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.toggle-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform 0.3s ease;
+  display: block;
+}
+
+.sidebar.collapsed .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.sidebar-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
+  padding: 20px;
+  overflow-y: auto;
+  transition: opacity 0.3s ease;
 }
 
-.leaderboard-title {
-  font-weight: 600;
-  font-size: 1.1rem;
+.sidebar.collapsed .sidebar-content {
+  opacity: 0;
+  pointer-events: none;
 }
 
+.sidebar-panel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 16px var(--shadow);
+  border: 1px solid rgba(31, 26, 20, 0.08);
+  display: flex;
+  gap: 12px;
+}
+
+.sidebar-panel-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-panel-content {
+  flex: 1;
+  min-width: 0;
+}
 .leaderboard-list {
   display: grid;
   gap: 8px;
-  max-height: 120px;
+  max-height: 200px;
   overflow-y: auto;
+  min-height: 60px;
 }
 
 .leaderboard-row {
@@ -456,14 +572,6 @@ button:disabled {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--accent);
-}
-
-.howto-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid rgba(31, 26, 20, 0.1);
-  box-shadow: 0 10px 24px var(--shadow);
 }
 
 .howto-title {
@@ -597,6 +705,52 @@ button:disabled {
   }
 }
 
+/* Responsive Breakpoints */
+@media (max-width: 1200px) {
+  .main-content {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid rgba(31, 26, 20, 0.1);
+    max-height: 500px;
+  }
+
+  .sidebar.collapsed {
+    width: 100%;
+    max-height: 56px;
+  }
+
+  .sidebar-toggle {
+    left: 50%;
+    transform: translateX(-50%) rotate(90deg);
+    top: -16px;
+  }
+
+  .sidebar-toggle:hover {
+    transform: translateX(-50%) rotate(90deg) scale(1.1);
+  }
+
+  .sidebar.collapsed .sidebar-toggle {
+    transform: translateX(-50%) rotate(-90deg);
+  }
+
+  .game-area {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .players-panel {
+    width: 100%;
+    max-width: 700px;
+    position: static;
+    max-height: 400px;
+    order: -1;
+  }
+}
+
 @media (max-width: 900px) {
   .board-section {
     grid-template-columns: 1fr;
@@ -715,19 +869,7 @@ button:disabled {
     font-size: 1.8rem;
   }
 
-  .picker {
-    gap: 6px;
-  }
-
-  .picker-grid {
-    grid-template-columns: repeat(auto-fit, minmax(clamp(28px, 5vw, 40px), 1fr));
-    gap: clamp(4px, 1vw, 6px);
-  }
-
-  .picker-button {
-    font-size: 0.75rem;
-    padding: clamp(6px, 1vw, 8px);
-  }
+  /* Number picker removed - players use auto-generate */
 
   .call-grid {
     grid-template-columns: repeat(auto-fit, minmax(clamp(28px, 5vw, 40px), 1fr));

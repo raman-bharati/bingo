@@ -58,6 +58,8 @@ const elements = {
   boardDirtyIndicator: document.getElementById("boardDirtyIndicator"),
   toggleRule: document.getElementById("toggleRule"),
   leaveRoom: document.getElementById("leaveRoom"),
+  sidebar: document.getElementById("sidebar"),
+  sidebarToggle: document.getElementById("sidebarToggle"),
 };
 
 const storage = {
@@ -71,6 +73,7 @@ function init() {
   elements.boardSize.value = String(state.boardSize);
   renderBoard();
   renderPicker();
+  initSidebar();
 
   elements.createRoom.addEventListener("click", () => handleRoomAction("create"));
   elements.joinRoom.addEventListener("click", () => handleRoomAction("join"));
@@ -84,6 +87,9 @@ function init() {
   }
   if (elements.leaveRoom) {
     elements.leaveRoom.addEventListener("click", leaveRoom);
+  }
+  if (elements.sidebarToggle) {
+    elements.sidebarToggle.addEventListener("click", toggleSidebar);
   }
   document.getElementById("closeWinnerModal").addEventListener("click", closeWinnerModal);
   document.addEventListener("keydown", handleKeyInput);
