@@ -11,6 +11,7 @@ $routes->get('bingo', 'BingoController::index');
 $routes->post('bingo/room/create', 'BingoController::createRoom');
 $routes->post('bingo/room/join', 'BingoController::joinRoom');
 $routes->post('bingo/room/board', 'BingoController::updateBoard');
+$routes->post('bingo/room/board-size', 'BingoController::updateBoardSize');
 $routes->get('bingo/room/state', 'BingoController::getState');
 $routes->post('bingo/room/call', 'BingoController::callNumber');
 $routes->post('bingo/room/start', 'BingoController::startGame');

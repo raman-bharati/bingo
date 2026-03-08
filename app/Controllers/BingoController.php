@@ -291,6 +291,81 @@ class BingoController extends BaseController
         ]);
     }
 
+    public function updateBoardSize(): ResponseInterface
+    {
+        $payload = $this->request->getJSON(true) ?? [];
+        $roomCode = $this->normalizeRoomCode($payload['roomCode'] ?? '');
+        $playerId = (string)($payload['playerId'] ?? '');
+        $boardSize = $this->normalizeBoardSize($payload['boardSize'] ?? 0);
+
+        if ($roomCode === '' || $playerId === '') {
+            return $this->fail('Room code and player ID are required.', 400);
+        }
+
+        if ($boardSize === null) {
+            return $this->fail('Board size must be 5, 7, or 9.', 400);
+        }
+
+        $room = $this->readRoom($roomCode);
+        if ($room === null) {
+            return $this->fail('Room not found.', 404);
+        }
+
+        $playerIndex = $this->findPlayerIndex($room, $playerId);
+        if ($playerIndex === -1) {
+            return $this->fail('Player not found.', 404);
+        }
+
+        if (($room['creatorId'] ?? '') !== $playerId) {
+            return $this->fail('Only the host can change board size.', 403);
+        }
+
+        $gameInProgress = !empty($room['calledNumbers']) && empty($room['winnerIds']);
+        if ($gameInProgress) {
+            return $this->fail('Cannot change board size while game is in progress.', 409);
+        }
+
+        $currentSize = (int)($room['boardSize'] ?? 5);
+        if ($currentSize === $boardSize) {
+            return $this->respond([
+                'ok' => true,
+                'state' => $this->buildState($room, $playerId),
+            ]);
+        }
+
+        $room['boardSize'] = $boardSize;
+        $room['calledNumbers'] = [];
+        $room['winnerIds'] = [];
+        $room['lastCall'] = null;
+        $room['started'] = false;
+
+        foreach ($room['players'] as $idx => $player) {
+            $room['players'][$idx]['board'] = null;
+            $room['players'][$idx]['ready'] = false;
+            $room['players'][$idx]['lines'] = 0;
+        }
+
+        $playerCount = count($room['players']);
+        if ($playerCount > 0) {
+            $startIndex = (int)($room['startIndex'] ?? 0) % $playerCount;
+            if ($startIndex < 0) {
+                $startIndex = 0;
+            }
+            $room['startIndex'] = $startIndex;
+            $room['turnIndex'] = $startIndex;
+        } else {
+            $room['startIndex'] = 0;
+            $room['turnIndex'] = 0;
+        }
+
+        $this->writeRoom($roomCode, $room);
+
+        return $this->respond([
+            'ok' => true,
+            'state' => $this->buildState($room, $playerId),
+        ]);
+    }
+
     public function newGame(): ResponseInterface
     {
         $payload = $this->request->getJSON(true) ?? [];

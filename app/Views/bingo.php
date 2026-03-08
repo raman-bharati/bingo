@@ -163,6 +163,8 @@
                   <option value="7">7 x 7</option>
                   <option value="9">9 x 9</option>
                 </select>
+                <div id="boardSizeDisplay" class="board-size-display" style="display: none;">5 x 5</div>
+                <div id="boardSizeHint" class="board-size-hint" style="display: none;">Host controlled</div>
               </label>
               <div class="actions">
                 <button id="createRoom" class="primary full">Create room</button>

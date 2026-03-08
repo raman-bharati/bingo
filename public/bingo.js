@@ -35,6 +35,8 @@ const elements = {
   playerName: document.getElementById("playerName"),
   roomCode: document.getElementById("roomCode"),
   boardSize: document.getElementById("boardSize"),
+  boardSizeDisplay: document.getElementById("boardSizeDisplay"),
+  boardSizeHint: document.getElementById("boardSizeHint"),
   createRoom: document.getElementById("createRoom"),
   joinRoom: document.getElementById("joinRoom"),
   autoFill: document.getElementById("autoFill"),
@@ -71,6 +73,9 @@ init();
 function init() {
   elements.playerName.value = localStorage.getItem("bingo.playerName") || "";
   elements.boardSize.value = String(state.boardSize);
+  if (elements.boardSizeDisplay) {
+    elements.boardSizeDisplay.textContent = formatBoardSizeLabel(state.boardSize);
+  }
   renderBoard();
   renderPicker();
 
@@ -121,6 +126,7 @@ function init() {
   
   // Initialize collapsible panels
   initCollapsiblePanels();
+  updateBoardSizeControl();
   
   document.getElementById("closeWinnerModal").addEventListener("click", closeWinnerModal);
   document.addEventListener("keydown", handleKeyInput);
@@ -313,7 +319,6 @@ function updateLockButton() {
 function updateBoardActions() {
   const me = state.players.find((player) => player.id === state.playerId);
   const isLocked = !!(me && me.ready);
-  const gameInProgress = state.calledNumbers.length > 0 && state.winnerIds.length === 0;
   
   if (elements.autoFill) {
     elements.autoFill.disabled = isLocked;
@@ -321,9 +326,36 @@ function updateBoardActions() {
   if (elements.clearBoard) {
     elements.clearBoard.disabled = isLocked;
   }
-  if (elements.boardSize) {
-    // Disable board size change only during active game, allow after game is over
-    elements.boardSize.disabled = gameInProgress;
+  updateBoardSizeControl();
+}
+
+function formatBoardSizeLabel(size) {
+  return `${size} x ${size}`;
+}
+
+function updateBoardSizeControl() {
+  if (!elements.boardSize) {
+    return;
+  }
+
+  const isHost = !!state.playerId && !!state.creatorId && state.playerId === state.creatorId;
+  const gameInProgress = state.calledNumbers.length > 0 && state.winnerIds.length === 0;
+  const showReadOnlyDisplay = !!state.roomCode && !isHost;
+
+  if (elements.boardSizeDisplay) {
+    elements.boardSizeDisplay.textContent = formatBoardSizeLabel(state.boardSize);
+    elements.boardSizeDisplay.style.display = showReadOnlyDisplay ? "flex" : "none";
+  }
+  if (elements.boardSizeHint) {
+    elements.boardSizeHint.style.display = showReadOnlyDisplay ? "block" : "none";
+  }
+
+  elements.boardSize.style.display = showReadOnlyDisplay ? "none" : "block";
+
+  if (!state.roomCode) {
+    elements.boardSize.disabled = false;
+  } else {
+    elements.boardSize.disabled = !isHost || gameInProgress;
   }
 }
 
@@ -341,30 +373,51 @@ function handleBoardSizeChange() {
     return;
   }
 
-  // Allow size change if game hasn't started or if game is over (before new game)
-  const isGameOver = state.winnerIds.length > 0;
-  const gameInProgress = state.calledNumbers.length > 0 && !isGameOver;
-  
-  if (state.roomCode && gameInProgress) {
-    alert("You can't change the board size while a game is in progress.");
+  if (!state.roomCode) {
+    setBoardSize(nextSize, true);
+    return;
+  }
+
+  const isHost = !!state.playerId && !!state.creatorId && state.playerId === state.creatorId;
+  if (!isHost) {
+    alert("Only the host can change board size.");
     elements.boardSize.value = String(state.boardSize);
     return;
   }
 
-  // If changing board size after game is over, reset win counters
-  if (state.roomCode && isGameOver && nextSize !== state.boardSize) {
-    if (!confirm("Changing board size will reset all win counters. Continue?")) {
-      elements.boardSize.value = String(state.boardSize);
-      return;
-    }
-    // Reset win counters for all players
-    state.players.forEach((player) => {
-      player.wins = 0;
-    });
-    renderLeaderboard();
+  const gameInProgress = state.calledNumbers.length > 0 && state.winnerIds.length === 0;
+  if (gameInProgress) {
+    alert("Cannot change board size while game is in progress.");
+    elements.boardSize.value = String(state.boardSize);
+    return;
   }
 
-  setBoardSize(nextSize, true);
+  fetch(`${BASE_URL}/bingo/room/board-size`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      roomCode: state.roomCode,
+      playerId: state.playerId,
+      boardSize: nextSize,
+    }),
+  })
+    .then(async (res) => {
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data || !data.ok) {
+        const errorMessage = data?.messages?.error || data?.error || `HTTP ${res.status}: ${res.statusText}`;
+        throw new Error(errorMessage);
+      }
+      return data;
+    })
+    .then((data) => {
+      applyState(data.state);
+    })
+    .catch((err) => {
+      alert(err.message || "Unable to change board size.");
+      elements.boardSize.value = String(state.boardSize);
+      console.error("Board size change exception:", err);
+    });
+
 }
 
 function setBoardSize(size, resetBoard) {
@@ -377,6 +430,9 @@ function setBoardSize(size, resetBoard) {
     state.boardDirty = true;
   }
   elements.boardSize.value = String(size);
+  if (elements.boardSizeDisplay) {
+    elements.boardSizeDisplay.textContent = formatBoardSizeLabel(size);
+  }
   renderBoard();
   renderPicker();
   updateLockButton();
@@ -522,11 +578,13 @@ function lockBoard() {
       board: state.board,
     }),
   })
-    .then((res) => {
+    .then(async (res) => {
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const errorMessage = data?.messages?.error || data?.error || `HTTP ${res.status}: ${res.statusText}`;
+        throw new Error(errorMessage);
       }
-      return res.json();
+      return data;
     })
     .then((data) => {
       if (!data.ok) {
@@ -546,7 +604,7 @@ function lockBoard() {
       applyState(data.state);
     })
     .catch((err) => {
-      alert("Unable to lock board. Please check your connection and try again.");
+      alert(err.message || "Unable to lock board. Please check your connection and try again.");
       console.error("Lock board exception:", err);
     });
 }

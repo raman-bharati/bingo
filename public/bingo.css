@@ -88,6 +88,24 @@ h1 {
   background: #fff;
 }
 
+.board-size-display {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(31, 26, 20, 0.18);
+  font-size: 1rem;
+  background: #fff;
+  color: rgba(31, 26, 20, 0.85);
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+}
+
+.board-size-hint {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: rgba(31, 26, 20, 0.55);
+}
+
 .actions {
   display: flex;
   gap: 12px;
