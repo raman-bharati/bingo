@@ -73,7 +73,15 @@ function init() {
   elements.boardSize.value = String(state.boardSize);
   renderBoard();
   renderPicker();
-  initSidebar();
+
+  // Initialize sidebar if toggle present
+  if (elements.sidebar && elements.sidebarToggle) {
+    const sidebarState = sessionStorage.getItem("bingo.sidebarCollapsed");
+    if (sidebarState === "true") {
+      elements.sidebar.classList.add("collapsed");
+      elements.sidebarToggle.setAttribute("aria-expanded", "false");
+    }
+  }
 
   elements.createRoom.addEventListener("click", () => handleRoomAction("create"));
   elements.joinRoom.addEventListener("click", () => handleRoomAction("join"));
@@ -89,8 +97,17 @@ function init() {
     elements.leaveRoom.addEventListener("click", leaveRoom);
   }
   if (elements.sidebarToggle) {
-    elements.sidebarToggle.addEventListener("click", toggleSidebar);
+    elements.sidebarToggle.addEventListener("click", function() {
+      if (!elements.sidebar) return;
+      const isCollapsed = elements.sidebar.classList.toggle("collapsed");
+      sessionStorage.setItem("bingo.sidebarCollapsed", isCollapsed.toString());
+      elements.sidebarToggle.setAttribute("aria-expanded", (!isCollapsed).toString());
+    });
   }
+  
+  // Initialize collapsible panels
+  initCollapsiblePanels();
+  
   document.getElementById("closeWinnerModal").addEventListener("click", closeWinnerModal);
   document.addEventListener("keydown", handleKeyInput);
 }
@@ -710,6 +727,12 @@ function renderStatus() {
   state.players.forEach((player, idx) => {
     const row = document.createElement("div");
     row.className = "player-row";
+    
+    // Highlight active turn
+    if (idx === state.turnIndex && state.started) {
+      row.classList.add("active-turn");
+    }
+    
     const label = document.createElement("span");
     const turnMarker = idx === state.turnIndex ? " • turn" : "";
     const readyMarker = player.ready ? "ready" : "not ready";
@@ -1253,4 +1276,50 @@ function playConfetti() {
     piece.style.animationDelay = Math.random() * 0.5 + "s";
     confetti.appendChild(piece);
   }
+}
+
+// Collapsible Panel Functionality
+function initCollapsiblePanels() {
+  const panelToggles = document.querySelectorAll('.panel-toggle');
+  
+  panelToggles.forEach(toggle => {
+    const targetId = toggle.getAttribute('data-target');
+    const panel = toggle.closest('.sidebar-panel');
+    
+    // Restore panel state from sessionStorage
+    const panelState = sessionStorage.getItem(`bingo.panel.${targetId}`);
+    if (panelState === 'collapsed') {
+      panel.classList.add('collapsed');
+      toggle.querySelector('.panel-toggle-icon').textContent = '+';
+    }
+    
+    // Add click handler
+    toggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const panel = this.closest('.sidebar-panel');
+      const isCollapsed = panel.classList.toggle('collapsed');
+      const icon = this.querySelector('.panel-toggle-icon');
+      
+      // Update icon
+      icon.textContent = isCollapsed ? '+' : '−';
+      
+      // Save state
+      const targetId = this.getAttribute('data-target');
+      sessionStorage.setItem(`bingo.panel.${targetId}`, isCollapsed ? 'collapsed' : 'expanded');
+    });
+  });
+  
+  // Also allow clicking the entire header to toggle
+  const panelHeaders = document.querySelectorAll('.sidebar-panel-header');
+  panelHeaders.forEach(header => {
+    header.addEventListener('click', function(e) {
+      // Don't trigger if clicking the toggle button itself
+      if (e.target.closest('.panel-toggle')) return;
+      
+      const toggle = this.querySelector('.panel-toggle');
+      if (toggle) {
+        toggle.click();
+      }
+    });
+  });
 }

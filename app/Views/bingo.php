@@ -133,9 +133,14 @@
         <div class="sidebar-content">
           <!-- Join/Create Room Panel -->
           <div class="sidebar-panel" id="roomPanel">
-            <div class="sidebar-panel-icon">🚪</div>
-            <div class="sidebar-panel-content">
+            <div class="sidebar-panel-header">
+              <div class="sidebar-panel-icon">🚪</div>
               <div class="panel-title">Join a room</div>
+              <button class="panel-toggle" data-target="roomPanelContent" aria-label="Toggle panel">
+                <span class="panel-toggle-icon">−</span>
+              </button>
+            </div>
+            <div class="sidebar-panel-content" id="roomPanelContent">
               <label class="field">
                 <span>Name</span>
                 <input id="playerName" type="text" placeholder="Your name">
@@ -162,9 +167,14 @@
 
           <!-- Leaderboard Panel -->
           <div class="sidebar-panel">
-            <div class="sidebar-panel-icon">🏆</div>
-            <div class="sidebar-panel-content">
+            <div class="sidebar-panel-header">
+              <div class="sidebar-panel-icon">🏆</div>
               <div class="panel-title">Leaderboard</div>
+              <button class="panel-toggle" data-target="leaderboardPanelContent" aria-label="Toggle panel">
+                <span class="panel-toggle-icon">−</span>
+              </button>
+            </div>
+            <div class="sidebar-panel-content" id="leaderboardPanelContent">
               <div id="leaderboard" class="leaderboard-list"></div>
               <button id="newGame" class="ghost full" disabled>Start game</button>
               <button id="toggleRule" class="ghost full" style="display: none;">Rule: All Can Win</button>
@@ -174,9 +184,14 @@
 
           <!-- How to Play Panel -->
           <div class="sidebar-panel">
-            <div class="sidebar-panel-icon">📖</div>
-            <div class="sidebar-panel-content">
+            <div class="sidebar-panel-header">
+              <div class="sidebar-panel-icon">📖</div>
               <div class="panel-title">How to Play</div>
+              <button class="panel-toggle" data-target="howtoContent" aria-label="Toggle panel">
+                <span class="panel-toggle-icon">−</span>
+              </button>
+            </div>
+            <div class="sidebar-panel-content" id="howtoContent">
               <ul class="howto-list">
                 <li>Fill your board with unique numbers (1-25 for 5×5)</li>
                 <li>Lock your board when ready</li>
@@ -234,6 +249,5 @@
     });
   </script>
   <script src="<?= '/bingo.js?v=' . (filemtime(FCPATH . 'bingo.js') ?: '0') ?>"></script>
-  <script src="<?= '/bingo-sidebar.js?v=' . (filemtime(FCPATH . 'bingo-sidebar.js') ?: '0') ?>"></script>
 </body>
 </html>
