@@ -130,6 +130,13 @@
           <span class="toggle-icon">‹</span>
         </button>
         
+        <!-- Collapsed Sidebar Icons -->
+        <div class="sidebar-collapsed-icons">
+          <div class="sidebar-collapsed-icon" title="Join a room" data-action="expand-sidebar">🚪</div>
+          <div class="sidebar-collapsed-icon" title="Leaderboard" data-action="expand-sidebar">🏆</div>
+          <div class="sidebar-collapsed-icon" title="How to Play" data-action="expand-sidebar">📖</div>
+        </div>
+        
         <div class="sidebar-content">
           <!-- Join/Create Room Panel -->
           <div class="sidebar-panel" id="roomPanel">

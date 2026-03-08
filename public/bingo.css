@@ -142,8 +142,8 @@ button:disabled {
 .game-area {
   flex: 1;
   display: flex;
-  gap: 20px;
-  padding: clamp(12px, 2vw, 24px);
+  gap: 16px;
+  padding: clamp(8px, 1.5vw, 16px);
   overflow-y: auto;
   align-items: flex-start;
   justify-content: center;
@@ -154,7 +154,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 700px;
+  max-width: 800px;
   min-width: 320px;
 }
 
@@ -207,26 +207,26 @@ button:disabled {
 .board {
   display: grid;
   grid-template-columns: repeat(var(--board-size, 5), 1fr);
-  gap: clamp(4px, 1.5vw, 8px);
+  gap: clamp(4px, 1.5vw, 10px);
   background: rgba(255, 255, 255, 0.7);
-  padding: clamp(8px, 2vw, 16px);
+  padding: clamp(10px, 2vw, 20px);
   border-radius: 16px;
   border: 1px solid rgba(31, 26, 20, 0.1);
-  max-width: min(600px, 100%);
+  max-width: min(750px, 100%);
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
 }
 
 .board[data-size="7"] {
-  gap: clamp(2px, 1vw, 5px);
-  max-width: min(500px, 100%);
+  gap: clamp(3px, 1vw, 6px);
+  max-width: min(650px, 100%);
 }
 
 .board[data-size="9"] {
-  gap: clamp(2px, 0.6vw, 4px);
-  max-width: min(450px, 100%);
-  padding: clamp(6px, 1.5vw, 12px);
+  gap: clamp(2px, 0.6vw, 5px);
+  max-width: min(600px, 100%);
+  padding: clamp(8px, 1.5vw, 14px);
 }
 
 .board[data-size="7"] .board-cell,
@@ -244,12 +244,12 @@ button:disabled {
   font-weight: 600;
   box-shadow: 0 8px 16px var(--shadow);
   border: 2px solid transparent;
-  min-height: clamp(36px, 7vw, 56px);
+  min-height: clamp(40px, 7vw, 64px);
   aspect-ratio: 1;
   display: grid;
   place-items: center;
   position: relative;
-  font-size: clamp(0.7rem, 1.8vw, 0.95rem);
+  font-size: clamp(0.8rem, 1.8vw, 1.1rem);
   will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
@@ -327,21 +327,21 @@ button:disabled {
 
 .players-panel {
   flex: 0 0 auto;
-  width: 280px;
+  width: 260px;
   background: #fff;
   border-radius: 16px;
-  padding: 16px;
+  padding: 14px;
   box-shadow: 0 10px 24px var(--shadow);
   border: 1px solid rgba(31, 26, 20, 0.08);
-  max-height: calc(100vh - 180px);
+  max-height: calc(100vh - 140px);
   overflow-y: auto;
   position: sticky;
-  top: 20px;
+  top: 10px;
 }
 
 .players-panel-header {
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
   border-bottom: 2px solid rgba(31, 26, 20, 0.08);
 }
 
@@ -460,39 +460,87 @@ button:disabled {
   position: absolute;
   left: -16px;
   top: 20px;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
-  border: 2px solid #fff;
-  box-shadow: 0 4px 12px var(--shadow);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 16px rgba(242, 107, 79, 0.4);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
+  padding: 0;
+  outline: none;
 }
 
 .sidebar-toggle:hover {
-  transform: scale(1.1);
+  transform: scale(1.15);
+  box-shadow: 0 6px 20px rgba(242, 107, 79, 0.5);
+  background: var(--accent-dark);
+}
+
+.sidebar-toggle:active {
+  transform: scale(1.05);
 }
 
 .sidebar-toggle:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  box-shadow: 0 4px 16px rgba(242, 107, 79, 0.4), 0 0 0 3px rgba(242, 107, 79, 0.2);
 }
 
 .toggle-icon {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   line-height: 1;
   transition: transform 0.3s ease;
   display: block;
+  font-weight: bold;
 }
 
 .sidebar.collapsed .toggle-icon {
   transform: rotate(180deg);
+}
+
+/* Collapsed Sidebar Panel Icons */
+.sidebar-collapsed-icons {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 72px 8px 16px;
+  align-items: center;
+  width: 100%;
+}
+
+.sidebar.collapsed .sidebar-collapsed-icons {
+  display: flex;
+}
+
+.sidebar-collapsed-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 12px var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.sidebar-collapsed-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(242, 107, 79, 0.3);
+  border-color: var(--accent);
+  background: rgba(242, 107, 79, 0.05);
+}
+
+.sidebar-collapsed-icon:active {
+  transform: scale(1.0);
 }
 
 .sidebar-content {
@@ -780,6 +828,11 @@ button:disabled {
     width: 100%;
     max-height: 56px;
   }
+  
+  /* Hide collapsed icons on mobile/tablet - different layout */
+  .sidebar-collapsed-icons {
+    display: none !important;
+  }
 
   .sidebar-toggle {
     left: 50%;
@@ -788,7 +841,7 @@ button:disabled {
   }
 
   .sidebar-toggle:hover {
-    transform: translateX(-50%) rotate(90deg) scale(1.1);
+    transform: translateX(-50%) rotate(90deg) scale(1.15);
   }
 
   .sidebar.collapsed .sidebar-toggle {

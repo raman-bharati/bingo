@@ -105,6 +105,20 @@ function init() {
     });
   }
   
+  // Add click handlers for collapsed sidebar icons to expand sidebar
+  const collapsedIcons = document.querySelectorAll('.sidebar-collapsed-icon[data-action="expand-sidebar"]');
+  collapsedIcons.forEach(icon => {
+    icon.addEventListener("click", function() {
+      if (elements.sidebar && elements.sidebar.classList.contains("collapsed")) {
+        elements.sidebar.classList.remove("collapsed");
+        sessionStorage.setItem("bingo.sidebarCollapsed", "false");
+        if (elements.sidebarToggle) {
+          elements.sidebarToggle.setAttribute("aria-expanded", "true");
+        }
+      }
+    });
+  });
+  
   // Initialize collapsible panels
   initCollapsiblePanels();
   
