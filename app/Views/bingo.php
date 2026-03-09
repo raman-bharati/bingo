@@ -114,14 +114,19 @@
               <div class="status-meta" id="turnStatus">Waiting...</div>
             </div>
             <div class="status-card status-compact">
-              <div class="status-title">Lines</div>
+              <div class="status-title">Lines &amp; Last call</div>
               <div id="linesStatus" class="status-value">0</div>
               <div id="lineLetters" class="status-meta">Need 5 lines to win.</div>
-            </div>
-            <div class="status-card status-compact">
-              <div class="status-title">Last call</div>
-              <div id="lastCall" class="status-value">None</div>
+              <div id="lastCall" class="status-value status-value-inline">None</div>
               <div class="status-meta" id="callMeta">Waiting for first call.</div>
+            </div>
+            <div class="status-card status-compact status-actions-card">
+              <div class="status-title">Game Controls</div>
+              <div class="status-actions">
+                <button id="newGame" class="ghost full" disabled>Start game</button>
+                <button id="toggleRule" class="ghost full" style="display: none;">Rule: All Can Win</button>
+                <button id="leaveRoom" class="ghost full" style="display: none;">Leave Room</button>
+              </div>
             </div>
           </div>
         </div>
@@ -188,9 +193,6 @@
             </div>
             <div class="sidebar-panel-content" id="leaderboardPanelContent">
               <div id="leaderboard" class="leaderboard-list"></div>
-              <button id="newGame" class="ghost full" disabled>Start game</button>
-              <button id="toggleRule" class="ghost full" style="display: none;">Rule: All Can Win</button>
-              <button id="leaveRoom" class="ghost full" style="display: none;">Leave Room</button>
             </div>
           </div>
 

@@ -340,10 +340,27 @@ button:disabled {
   font-weight: 600;
 }
 
+.status-value-inline {
+  margin-top: 10px;
+  font-size: 1rem;
+}
+
 .status-meta {
   color: rgba(31, 26, 20, 0.6);
   font-size: 0.9rem;
   margin-top: 6px;
+}
+
+.status-actions-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .players {
