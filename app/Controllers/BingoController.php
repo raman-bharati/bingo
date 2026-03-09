@@ -81,7 +81,6 @@ class BingoController extends BaseController
         $roomCode = $this->normalizeRoomCode($payload['roomCode'] ?? '');
         $name = trim((string)($payload['name'] ?? ''));
         $board = $payload['board'] ?? null;
-        $boardSize = $this->normalizeBoardSize($payload['boardSize'] ?? 0);
 
         if ($roomCode === '' || $name === '') {
             return $this->fail('Room code and name are required.', 400);
@@ -93,9 +92,6 @@ class BingoController extends BaseController
         }
 
         $roomSize = (int)($room['boardSize'] ?? 5);
-        if ($boardSize !== null && $boardSize !== $roomSize) {
-            return $this->fail('Board size does not match the room.', 409);
-        }
 
         if (!empty($room['calledNumbers'])) {
             return $this->fail('Game already started.', 409);

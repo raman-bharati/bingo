@@ -513,9 +513,12 @@ function handleRoomAction(action) {
   const payload = {
     name,
     roomCode,
-    boardSize: state.boardSize,
     board: boardReady ? state.board : null,
   };
+
+  if (action === "create") {
+    payload.boardSize = state.boardSize;
+  }
 
   fetch(`${BASE_URL}/bingo/room/${action}`, {
     method: "POST",
