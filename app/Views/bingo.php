@@ -94,6 +94,17 @@
             </div>
           </div>
           <div class="board" id="board"></div>
+        </div>
+
+        <!-- Right Panel (Players + Status) -->
+        <div class="right-panel">
+          <!-- Players Panel (Always visible during game) -->
+          <div class="players-panel">
+            <div class="players-panel-header">
+              <div class="status-title">👥 Players</div>
+            </div>
+            <div id="playerList" class="players-list"></div>
+          </div>
 
           <!-- Game Status Info -->
           <div class="game-status-grid">
@@ -113,14 +124,6 @@
               <div class="status-meta" id="callMeta">Waiting for first call.</div>
             </div>
           </div>
-        </div>
-
-        <!-- Players Panel (Always visible during game) -->
-        <div class="players-panel">
-          <div class="players-panel-header">
-            <div class="status-title">👥 Players</div>
-          </div>
-          <div id="playerList" class="players-list"></div>
         </div>
       </section>
 
