@@ -275,7 +275,7 @@ button:disabled {
   display: grid;
   place-items: center;
   position: relative;
-  font-size: clamp(1.5rem, 2.8vw, 2rem);
+  font-size: clamp(2rem, 3.2vw, 2.5rem);
   will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
