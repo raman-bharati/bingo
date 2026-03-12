@@ -1202,6 +1202,11 @@ function toggleRule() {
   if (!state.roomCode || !state.playerId) {
     return;
   }
+  const isHost = !!state.playerId && !!state.creatorId && state.playerId === state.creatorId;
+  if (!isHost) {
+    alert("Only the host can change game mode rules.");
+    return;
+  }
   if (state.isSubmitting) {
     return;
   }
@@ -1234,8 +1239,10 @@ function updateToggleRuleButton() {
     return;
   }
   
+  const isHost = !!state.playerId && !!state.creatorId && state.playerId === state.creatorId;
+
   if (state.roomCode) {
-    elements.toggleRule.style.display = "block";
+    elements.toggleRule.style.display = isHost ? "block" : "none";
     elements.leaveRoom.style.display = "block";
     if (state.callerWinsOnly) {
       elements.toggleRule.textContent = "Rule: Caller Wins Only ✓";

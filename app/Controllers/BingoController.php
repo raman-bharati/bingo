@@ -770,6 +770,10 @@ class BingoController extends BaseController
             return $this->fail('Player not found.', 404);
         }
 
+        if (($room['creatorId'] ?? '') !== $playerId) {
+            return $this->fail('Only the host can change game mode rules.', 403);
+        }
+
         // Only allow rule change before game starts or after game ends
         if (!empty($room['started']) && empty($room['winnerIds'])) {
             return $this->fail('Cannot change rule during an active game.', 409);
