@@ -26,6 +26,8 @@ class BingoController extends BaseController
         $name = trim((string)($payload['name'] ?? ''));
         $board = $payload['board'] ?? null;
         $boardSize = $this->normalizeBoardSize($payload['boardSize'] ?? 5);
+        $addBot = !empty($payload['addBot']);
+        $botDifficulty = $this->normalizeBotDifficulty($payload['botDifficulty'] ?? 'easy');
 
         if ($roomCode === '' || $name === '') {
             return $this->fail('Room code and name are required.', 400);
@@ -65,6 +67,21 @@ class BingoController extends BaseController
             'roomWins' => [],
             'callerWinsOnly' => false,
         ];
+
+        if ($addBot) {
+            $botId = $this->newBotId();
+            $botBoard = $this->generateBotBoard($boardSize);
+            $room['players'][] = [
+                'id' => $botId,
+                'name' => 'CPU (' . ucfirst($botDifficulty) . ')',
+                'board' => $botBoard,
+                'lines' => 0,
+                'ready' => true,
+                'wins' => 0,
+                'isBot' => true,
+                'difficulty' => $botDifficulty,
+            ];
+        }
 
         $this->writeRoom($roomCode, $room);
 
@@ -240,45 +257,23 @@ class BingoController extends BaseController
             return $this->fail('Number already called.', 409);
         }
 
-        $room['calledNumbers'][] = $number;
-        $room['lastCall'] = [
-            'number' => $number,
-            'by' => $playerId,
-            'at' => time(),
-        ];
+        $room = $this->applyCalledNumber($room, $playerId, $number);
 
-        // Track all players who reached 5 lines
-        $playersAt5Lines = [];
-        foreach ($room['players'] as $idx => $player) {
-            $board = $player['board'] ?? null;
-            $room['players'][$idx]['lines'] = $this->countLines($board, $room['calledNumbers'], (int)($room['boardSize'] ?? 5));
-            if ($room['players'][$idx]['lines'] >= 5) {
-                $playersAt5Lines[] = $player['id'];
+        // Auto-play bot turns until the game ends or a human turn is reached.
+        while (empty($room['winnerIds']) && $this->isBotTurn($room)) {
+            $bot = $room['players'][(int)$room['turnIndex']] ?? null;
+            if (!is_array($bot)) {
+                break;
             }
+
+            $botNumber = $this->selectBotNumber($room, $bot);
+            if ($botNumber === null) {
+                break;
+            }
+
+            $room = $this->applyCalledNumber($room, (string)$bot['id'], $botNumber);
         }
 
-        // Only mark winners if no previous winners exist (first time reaching 5 lines)
-        if (empty($room['winnerIds']) && !empty($playersAt5Lines)) {
-            // Apply caller-wins-only rule if enabled
-            $callerWinsOnly = !empty($room['callerWinsOnly']);
-            if ($callerWinsOnly) {
-                // Only the caller can win
-                $room['winnerIds'] = in_array($playerId, $playersAt5Lines, true) ? [$playerId] : [];
-            } else {
-                // All players who reached 5 lines win
-                $room['winnerIds'] = $playersAt5Lines;
-            }
-            
-            // Increment wins for all winners
-            foreach ($room['winnerIds'] as $winnerId) {
-                $winnerIndex = $this->findPlayerIndex($room, $winnerId);
-                if ($winnerIndex !== -1) {
-                    $room['players'][$winnerIndex]['wins'] = (int)($room['players'][$winnerIndex]['wins'] ?? 0) + 1;
-                }
-            }
-        }
-
-        $room['turnIndex'] = $this->nextTurnIndex($room);
         $this->writeRoom($roomCode, $room);
 
         return $this->respond([
@@ -336,8 +331,13 @@ class BingoController extends BaseController
         $room['started'] = false;
 
         foreach ($room['players'] as $idx => $player) {
-            $room['players'][$idx]['board'] = null;
-            $room['players'][$idx]['ready'] = false;
+            if (!empty($player['isBot'])) {
+                $room['players'][$idx]['board'] = $this->generateBotBoard($boardSize);
+                $room['players'][$idx]['ready'] = true;
+            } else {
+                $room['players'][$idx]['board'] = null;
+                $room['players'][$idx]['ready'] = false;
+            }
             $room['players'][$idx]['lines'] = 0;
         }
 
@@ -393,8 +393,13 @@ class BingoController extends BaseController
 
         foreach ($room['players'] as $idx => $player) {
             $room['players'][$idx]['lines'] = 0;
-            $room['players'][$idx]['ready'] = false;
-            $room['players'][$idx]['board'] = null;
+            if (!empty($player['isBot'])) {
+                $room['players'][$idx]['board'] = $this->generateBotBoard((int)($room['boardSize'] ?? 5));
+                $room['players'][$idx]['ready'] = true;
+            } else {
+                $room['players'][$idx]['ready'] = false;
+                $room['players'][$idx]['board'] = null;
+            }
         }
 
         $room['startIndex'] = $this->nextStartIndex($room);
@@ -441,6 +446,22 @@ class BingoController extends BaseController
 
         $room['started'] = true;
         $room['turnIndex'] = $room['startIndex'] ?? 0;
+
+        // If a bot starts first, play bot turns immediately until a human turn or game end.
+        while (empty($room['winnerIds']) && $this->isBotTurn($room)) {
+            $bot = $room['players'][(int)$room['turnIndex']] ?? null;
+            if (!is_array($bot)) {
+                break;
+            }
+
+            $botNumber = $this->selectBotNumber($room, $bot);
+            if ($botNumber === null) {
+                break;
+            }
+
+            $room = $this->applyCalledNumber($room, (string)$bot['id'], $botNumber);
+        }
+
         $this->writeRoom($roomCode, $room);
 
         return $this->respond([
@@ -691,6 +712,8 @@ class BingoController extends BaseController
                 'lines' => $player['lines'] ?? 0,
                 'ready' => $player['ready'] ?? false,
                 'wins' => $player['wins'] ?? 0,
+                'isBot' => !empty($player['isBot']),
+                'difficulty' => $player['difficulty'] ?? null,
             ];
         }
 
@@ -701,6 +724,22 @@ class BingoController extends BaseController
         }
 
         $started = !empty($room['started']) || !empty($room['calledNumbers']);
+
+        $botBoards = [];
+        if (!empty($room['winnerIds'])) {
+            foreach ($room['players'] as $player) {
+                if (empty($player['isBot']) || !is_array($player['board'] ?? null)) {
+                    continue;
+                }
+
+                $botBoards[] = [
+                    'id' => $player['id'],
+                    'name' => $player['name'] ?? 'CPU',
+                    'difficulty' => $player['difficulty'] ?? 'easy',
+                    'board' => $player['board'],
+                ];
+            }
+        }
 
         return [
             'roomCode' => $room['roomCode'],
@@ -714,6 +753,7 @@ class BingoController extends BaseController
             'winnerIds' => $room['winnerIds'] ?? [],
             'lastCall' => $room['lastCall'],
             'board' => $playerBoard,
+            'botBoards' => $botBoards,
             'started' => $started,
             'callerWinsOnly' => !empty($room['callerWinsOnly']),
         ];
@@ -748,6 +788,274 @@ class BingoController extends BaseController
     private function newPlayerId(): string
     {
         return 'p_' . bin2hex(random_bytes(8));
+    }
+
+    private function newBotId(): string
+    {
+        return 'bot_' . bin2hex(random_bytes(8));
+    }
+
+    private function normalizeBotDifficulty($difficulty): string
+    {
+        $value = strtolower(trim((string)$difficulty));
+        if (!in_array($value, ['easy', 'medium', 'hard', 'extreme'], true)) {
+            return 'easy';
+        }
+        return $value;
+    }
+
+    private function generateBotBoard(int $size): array
+    {
+        $numbers = range(1, $size * $size);
+        shuffle($numbers);
+        $board = [];
+
+        for ($r = 0; $r < $size; $r++) {
+            $board[] = array_slice($numbers, $r * $size, $size);
+        }
+
+        return $board;
+    }
+
+    private function isBotTurn(array $room): bool
+    {
+        $turnIndex = (int)($room['turnIndex'] ?? 0);
+        $player = $room['players'][$turnIndex] ?? null;
+        return is_array($player) && !empty($player['isBot']);
+    }
+
+    private function selectBotNumber(array $room, array $bot): ?int
+    {
+        $maxNumber = $this->maxNumberForRoom($room);
+        $called = array_flip($room['calledNumbers'] ?? []);
+        $allUncalled = [];
+        for ($n = 1; $n <= $maxNumber; $n++) {
+            if (!isset($called[$n])) {
+                $allUncalled[] = $n;
+            }
+        }
+
+        if ($allUncalled === []) {
+            return null;
+        }
+
+        $difficulty = $this->normalizeBotDifficulty($bot['difficulty'] ?? 'easy');
+        $botBoard = $bot['board'] ?? null;
+
+        if (!is_array($botBoard)) {
+            return $allUncalled[array_rand($allUncalled)];
+        }
+
+        $botCandidates = [];
+        foreach ($botBoard as $row) {
+            foreach ((array)$row as $value) {
+                $v = (int)$value;
+                if ($v > 0 && !isset($called[$v])) {
+                    $botCandidates[$v] = true;
+                }
+            }
+        }
+        $botCandidates = array_keys($botCandidates);
+
+        if ($difficulty === 'easy') {
+            // Easy: play to finish 5 lines quickly on its own board (no opponent blocking).
+            $size = (int)($room['boardSize'] ?? 5);
+            $candidatePool = $botCandidates !== [] ? $botCandidates : $allUncalled;
+            $scores = [];
+            $calledNumbers = $room['calledNumbers'] ?? [];
+
+            foreach ($candidatePool as $candidate) {
+                $scores[$candidate] = $this->scoreCandidateForBoard($botBoard, $calledNumbers, $candidate, $size, 8.0);
+            }
+
+            arsort($scores);
+            $bestEasy = array_key_first($scores);
+            if ($bestEasy !== null) {
+                return (int)$bestEasy;
+            }
+            return $allUncalled[array_rand($allUncalled)];
+        }
+
+        if ($difficulty === 'medium') {
+            if ($botCandidates !== []) {
+                return $botCandidates[array_rand($botCandidates)];
+            }
+            return $allUncalled[array_rand($allUncalled)];
+        }
+
+        // Hard/Extreme: build trap lines first, then finish once traps exceed threshold.
+        $size = (int)($room['boardSize'] ?? 5);
+        $candidatePool = $botCandidates !== [] ? $botCandidates : $allUncalled;
+        $calledNumbers = $room['calledNumbers'] ?? [];
+        $lineStatsBefore = $this->getLineStats($botBoard, $calledNumbers, $size);
+        $shouldFinish = $lineStatsBefore['nearComplete'] > 3;
+        $scores = [];
+
+        foreach ($candidatePool as $candidate) {
+            $calledAfter = $calledNumbers;
+            $calledAfter[] = $candidate;
+            $lineStatsAfter = $this->getLineStats($botBoard, $calledAfter, $size);
+
+            $deltaNear = $lineStatsAfter['nearComplete'] - $lineStatsBefore['nearComplete'];
+            $deltaComplete = $lineStatsAfter['complete'] - $lineStatsBefore['complete'];
+
+            if ($shouldFinish) {
+                // Closing phase: prioritize ending the game quickly.
+                $scores[$candidate] = ($deltaComplete * 2000)
+                    + ($lineStatsAfter['complete'] * 200)
+                    + ($this->scoreCandidateForBoard($botBoard, $calledNumbers, $candidate, $size, 12.0));
+            } else {
+                // Trap phase: keep many near-complete lines, avoid finishing too early.
+                $scores[$candidate] = ($deltaNear * 800)
+                    + ($lineStatsAfter['nearComplete'] * 120)
+                    + ($this->scoreCandidateForBoard($botBoard, $calledNumbers, $candidate, $size, 6.0))
+                    - ($deltaComplete * 3000);
+            }
+        }
+
+        if ($difficulty === 'extreme') {
+            // Extreme can "see" opponent boards and avoid helping them.
+            foreach ($candidatePool as $candidate) {
+                foreach ($room['players'] as $player) {
+                    if (($player['id'] ?? '') === ($bot['id'] ?? '') || !is_array($player['board'] ?? null)) {
+                        continue;
+                    }
+
+                    $opponentWeight = $shouldFinish ? 6.0 : 8.0;
+                    $scores[$candidate] -= $this->scoreCandidateForBoard(
+                        $player['board'],
+                        $calledNumbers,
+                        $candidate,
+                        $size,
+                        $opponentWeight
+                    );
+                }
+            }
+        }
+
+        arsort($scores);
+        $best = array_key_first($scores);
+        if ($best === null) {
+            return $allUncalled[array_rand($allUncalled)];
+        }
+
+        return (int)$best;
+    }
+
+    private function getLineStats(array $board, array $calledNumbers, int $size): array
+    {
+        $calledSet = array_flip($calledNumbers);
+        $complete = 0;
+        $nearComplete = 0;
+
+        foreach ($this->getBoardLines($board, $size) as $line) {
+            $calledCount = 0;
+            foreach ($line as $value) {
+                if ($value !== null && isset($calledSet[$value])) {
+                    $calledCount++;
+                }
+            }
+
+            if ($calledCount >= $size) {
+                $complete++;
+            } elseif ($calledCount === $size - 1) {
+                $nearComplete++;
+            }
+        }
+
+        return [
+            'complete' => $complete,
+            'nearComplete' => $nearComplete,
+        ];
+    }
+
+    private function scoreCandidateForBoard(array $board, array $calledNumbers, int $candidate, int $size, float $base): float
+    {
+        $calledSet = array_flip($calledNumbers);
+        $score = 0.0;
+
+        foreach ($this->getBoardLines($board, $size) as $line) {
+            if (!in_array($candidate, $line, true)) {
+                continue;
+            }
+
+            $calledCount = 0;
+            foreach ($line as $value) {
+                if (isset($calledSet[$value])) {
+                    $calledCount++;
+                }
+            }
+
+            $score += pow($base, $calledCount);
+        }
+
+        return $score;
+    }
+
+    private function getBoardLines(array $board, int $size): array
+    {
+        $lines = [];
+
+        for ($r = 0; $r < $size; $r++) {
+            $lines[] = $board[$r] ?? [];
+        }
+
+        for ($c = 0; $c < $size; $c++) {
+            $col = [];
+            for ($r = 0; $r < $size; $r++) {
+                $col[] = $board[$r][$c] ?? null;
+            }
+            $lines[] = $col;
+        }
+
+        $diag1 = [];
+        $diag2 = [];
+        for ($i = 0; $i < $size; $i++) {
+            $diag1[] = $board[$i][$i] ?? null;
+            $diag2[] = $board[$i][$size - 1 - $i] ?? null;
+        }
+        $lines[] = $diag1;
+        $lines[] = $diag2;
+
+        return $lines;
+    }
+
+    private function applyCalledNumber(array $room, string $callerId, int $number): array
+    {
+        $room['calledNumbers'][] = $number;
+        $room['lastCall'] = [
+            'number' => $number,
+            'by' => $callerId,
+            'at' => time(),
+        ];
+
+        $playersAt5Lines = [];
+        foreach ($room['players'] as $idx => $player) {
+            $board = $player['board'] ?? null;
+            $room['players'][$idx]['lines'] = $this->countLines($board, $room['calledNumbers'], (int)($room['boardSize'] ?? 5));
+            if ($room['players'][$idx]['lines'] >= 5) {
+                $playersAt5Lines[] = $player['id'];
+            }
+        }
+
+        if (empty($room['winnerIds']) && !empty($playersAt5Lines)) {
+            $callerWinsOnly = !empty($room['callerWinsOnly']);
+            if ($callerWinsOnly) {
+                $room['winnerIds'] = in_array($callerId, $playersAt5Lines, true) ? [$callerId] : [];
+            } else {
+                $room['winnerIds'] = $playersAt5Lines;
+            }
+
+            foreach ($room['winnerIds'] as $winnerId) {
+                $winnerIndex = $this->findPlayerIndex($room, $winnerId);
+                if ($winnerIndex !== -1) {
+                    $room['players'][$winnerIndex]['wins'] = (int)($room['players'][$winnerIndex]['wins'] ?? 0) + 1;
+                }
+            }
+        }
+
+        $room['turnIndex'] = $this->nextTurnIndex($room);
+        return $room;
     }
 
     public function toggleRule(): ResponseInterface

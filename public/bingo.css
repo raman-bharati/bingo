@@ -106,6 +106,32 @@ h1 {
   color: rgba(31, 26, 20, 0.55);
 }
 
+.bot-options {
+  margin: 8px 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(31, 26, 20, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.bot-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.bot-toggle input {
+  width: 16px;
+  height: 16px;
+}
+
+.bot-difficulty {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
 .actions {
   display: flex;
   gap: 12px;
@@ -814,6 +840,52 @@ button:disabled {
   text-align: center;
 }
 
+.bot-boards-reveal {
+  margin: 14px 0 16px;
+  text-align: left;
+}
+
+.bot-boards-title {
+  font-size: 1rem;
+  margin: 0 0 8px;
+  color: var(--ink);
+}
+
+.bot-board-card {
+  border: 1px solid rgba(31, 26, 20, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 10px;
+}
+
+.bot-board-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.bot-board-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--bot-board-size, 5), minmax(0, 1fr));
+  gap: 4px;
+}
+
+.bot-board-cell {
+  min-height: 24px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid rgba(31, 26, 20, 0.16);
+  display: grid;
+  place-items: center;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.bot-board-cell.called {
+  background: rgba(76, 175, 80, 0.14);
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
 @keyframes bounce {
   0%, 100% {
     transform: translateY(0);
@@ -1049,6 +1121,11 @@ button:disabled {
     padding: 20px;
     margin: 16px;
     max-width: 90vw;
+  }
+
+  .bot-board-cell {
+    min-height: 20px;
+    font-size: 0.72rem;
   }
 
   .celebration h2 {

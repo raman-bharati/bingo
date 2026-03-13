@@ -29,6 +29,7 @@ const state = {
   isSubmitting: false, // Prevent double submissions
   hasSeenVictory: false, // Track if current player has seen victory modal for current game
   callerWinsOnly: false, // Game rule: only caller can win
+  botBoards: [],
 };
 
 const elements = {
@@ -37,6 +38,9 @@ const elements = {
   boardSize: document.getElementById("boardSize"),
   boardSizeDisplay: document.getElementById("boardSizeDisplay"),
   boardSizeHint: document.getElementById("boardSizeHint"),
+  addBot: document.getElementById("addBot"),
+  botDifficulty: document.getElementById("botDifficulty"),
+  botDifficultyWrap: document.getElementById("botDifficultyWrap"),
   createRoom: document.getElementById("createRoom"),
   joinRoom: document.getElementById("joinRoom"),
   autoFill: document.getElementById("autoFill"),
@@ -56,6 +60,7 @@ const elements = {
   winnerName: document.getElementById("winnerName"),
   winnerMessage: document.getElementById("winnerMessage"),
   winnersList: document.getElementById("winnersList"),
+  botBoardsReveal: document.getElementById("botBoardsReveal"),
   leaderboard: document.getElementById("leaderboard"),
   boardDirtyIndicator: document.getElementById("boardDirtyIndicator"),
   toggleRule: document.getElementById("toggleRule"),
@@ -76,6 +81,9 @@ function init() {
   if (elements.boardSizeDisplay) {
     elements.boardSizeDisplay.textContent = formatBoardSizeLabel(state.boardSize);
   }
+  if (elements.botDifficulty) {
+    elements.botDifficulty.value = "easy";
+  }
   renderBoard();
   renderPicker();
 
@@ -91,6 +99,9 @@ function init() {
   elements.createRoom.addEventListener("click", () => handleRoomAction("create"));
   elements.joinRoom.addEventListener("click", () => handleRoomAction("join"));
   elements.boardSize.addEventListener("change", handleBoardSizeChange);
+  if (elements.addBot) {
+    elements.addBot.addEventListener("change", updateBotControls);
+  }
   elements.autoFill.addEventListener("click", autoFillBoard);
   elements.clearBoard.addEventListener("click", clearBoard);
   elements.lockBoard.addEventListener("click", lockBoard);
@@ -127,6 +138,7 @@ function init() {
   // Initialize collapsible panels
   initCollapsiblePanels();
   updateBoardSizeControl();
+  updateBotControls();
   
   document.getElementById("closeWinnerModal").addEventListener("click", closeWinnerModal);
   document.addEventListener("keydown", handleKeyInput);
@@ -357,6 +369,20 @@ function updateBoardSizeControl() {
   } else {
     elements.boardSize.disabled = !isHost || gameInProgress;
   }
+
+  updateBotControls();
+}
+
+function updateBotControls() {
+  if (!elements.addBot || !elements.botDifficulty || !elements.botDifficultyWrap) {
+    return;
+  }
+
+  // Bot options are only relevant before creating a room.
+  const isInRoom = !!state.roomCode;
+  elements.addBot.disabled = isInRoom;
+  elements.botDifficulty.disabled = isInRoom || !elements.addBot.checked;
+  elements.botDifficultyWrap.style.opacity = elements.botDifficulty.disabled ? "0.6" : "1";
 }
 
 function updateBoardDirtyIndicator() {
@@ -518,6 +544,8 @@ function handleRoomAction(action) {
 
   if (action === "create") {
     payload.boardSize = state.boardSize;
+    payload.addBot = !!(elements.addBot && elements.addBot.checked);
+    payload.botDifficulty = elements.botDifficulty ? elements.botDifficulty.value : "easy";
   }
 
   fetch(`${BASE_URL}/bingo/room/${action}`, {
@@ -673,6 +701,7 @@ function applyState(nextState) {
   state.lastCall = nextState.lastCall || null;
   state.started = !!nextState.started;
   state.callerWinsOnly = !!nextState.callerWinsOnly;
+  state.botBoards = nextState.botBoards || [];
 
   // Reset modal and victory flag when transitioning from game-over to new game
   if (wasGameOver && !isNowGameOver && elements.winnerModal) {
@@ -820,7 +849,7 @@ function renderStatus() {
     
     // Add kick button only if current player is the room creator and not kicking themselves
     const isCreator = state.playerId === state.creatorId;
-    if (player.id !== state.playerId && state.roomCode && isCreator) {
+    if (player.id !== state.playerId && state.roomCode && isCreator && !player.isBot) {
       const kickBtn = document.createElement("button");
       kickBtn.textContent = "✕";
       kickBtn.className = "kick-btn";
@@ -1189,13 +1218,73 @@ function showWinnerCelebration(winners, isMultipleWinners, isPlayerWinner) {
   } catch (e) {
     console.error('Confetti error:', e);
   }
+
+  renderBotBoardsInModal();
 }
 
 function closeWinnerModal() {
   if (!elements.winnerModal) return;
   elements.winnerModal.style.display = "none";
+  if (elements.botBoardsReveal) {
+    elements.botBoardsReveal.style.display = "none";
+    elements.botBoardsReveal.innerHTML = "";
+  }
   renderStatus();
   updateLockButton();
+}
+
+function renderBotBoardsInModal() {
+  if (!elements.botBoardsReveal) {
+    return;
+  }
+
+  const botBoards = Array.isArray(state.botBoards) ? state.botBoards : [];
+  if (botBoards.length === 0) {
+    elements.botBoardsReveal.style.display = "none";
+    elements.botBoardsReveal.innerHTML = "";
+    return;
+  }
+
+  elements.botBoardsReveal.innerHTML = "";
+  const title = document.createElement("h3");
+  title.className = "bot-boards-title";
+  title.textContent = "Computer board";
+  elements.botBoardsReveal.appendChild(title);
+
+  botBoards.forEach((bot) => {
+    const card = document.createElement("div");
+    card.className = "bot-board-card";
+
+    const name = document.createElement("div");
+    name.className = "bot-board-name";
+    const diff = bot.difficulty ? ` (${String(bot.difficulty).toUpperCase()})` : "";
+    name.textContent = `${bot.name || "CPU"}${diff}`;
+    card.appendChild(name);
+
+    const boardGrid = document.createElement("div");
+    boardGrid.className = "bot-board-grid";
+    const board = Array.isArray(bot.board) ? bot.board : [];
+    const size = board.length > 0 ? board.length : 5;
+    boardGrid.style.setProperty("--bot-board-size", String(size));
+
+    board.forEach((row) => {
+      (Array.isArray(row) ? row : []).forEach((cell) => {
+        const value = Number(cell);
+        const cellEl = document.createElement("div");
+        cellEl.className = "bot-board-cell";
+        cellEl.textContent = Number.isInteger(value) ? String(value) : "";
+        if (Number.isInteger(value) && state.calledNumbers.includes(value)) {
+          cellEl.classList.add("called");
+        }
+        boardGrid.appendChild(cellEl);
+      });
+    });
+
+    card.appendChild(boardGrid);
+    elements.botBoardsReveal.appendChild(card);
+  });
+
+  elements.botBoardsReveal.style.display = "block";
 }
 
 function toggleRule() {

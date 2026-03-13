@@ -174,6 +174,21 @@
                 <div id="boardSizeDisplay" class="board-size-display" style="display: none;">5 x 5</div>
                 <div id="boardSizeHint" class="board-size-hint" style="display: none;">Host controlled</div>
               </label>
+              <div class="bot-options" id="botOptions">
+                <label class="bot-toggle">
+                  <input id="addBot" type="checkbox">
+                  <span>Add computer opponent</span>
+                </label>
+                <label class="field bot-difficulty" id="botDifficultyWrap">
+                  <span>Bot difficulty</span>
+                  <select id="botDifficulty">
+                    <option value="easy" selected>Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                    <option value="extreme">Extreme</option>
+                  </select>
+                </label>
+              </div>
               <div class="actions">
                 <button id="createRoom" class="primary full">Create room</button>
                 <button id="joinRoom" class="ghost full">Join room</button>
@@ -234,6 +249,7 @@
         <h2 id="winnerName"></h2>
         <p id="winnerMessage">🎉 WINS! 🎉</p>
         <div id="winnersList" class="winners-list"></div>
+        <div id="botBoardsReveal" class="bot-boards-reveal" style="display: none;"></div>
         <button id="closeWinnerModal" class="primary">Continue</button>
       </div>
     </div>
