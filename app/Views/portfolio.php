@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= base_url('assets/portfolio.css') ?>?v=<?= file_exists(ROOTPATH . 'public/portfolio.css') ? (string) filemtime(ROOTPATH . 'public/portfolio.css') : '0' ?>">
+  <link rel="stylesheet" href="/assets/portfolio.css?v=<?= file_exists(ROOTPATH . 'public/portfolio.css') ? (string) filemtime(ROOTPATH . 'public/portfolio.css') : '0' ?>">
 </head>
 <body>
   <div class="portfolio-shell">

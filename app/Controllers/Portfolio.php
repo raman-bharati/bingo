@@ -17,7 +17,7 @@ class Portfolio extends BaseController
                 'resumeUrl' => '#',
                 'githubUrl' => 'https://github.com/yourusername',
                 'linkedinUrl' => 'https://www.linkedin.com/in/yourusername/',
-                'gameUrl' => base_url('/bingo'),
+                'gameUrl' => '/bingo',
             ],
             'about' => 'This single-page portfolio is a starter you can deploy immediately. Replace the placeholder copy with your own background, strengths, and the kind of work you want to attract.',
             'skills' => [
@@ -32,7 +32,7 @@ class Portfolio extends BaseController
                 [
                     'title' => 'Featured Game Project',
                     'summary' => 'A real-time multiplayer game experience with room management, live state updates, and a focused interface for fast play.',
-                    'link' => base_url('/bingo'),
+                    'link' => '/bingo',
                     'linkLabel' => 'Play the game',
                 ],
                 [
