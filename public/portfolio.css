@@ -1,0 +1,328 @@
+:root {
+  color-scheme: light;
+  --canvas: #f7f3eb;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-strong: #fffdf8;
+  --ink: #1a1816;
+  --muted: #685f58;
+  --line: rgba(26, 24, 22, 0.1);
+  --accent: #165d52;
+  --accent-strong: #0f453d;
+  --accent-soft: #d7ece7;
+  --shadow: 0 24px 60px rgba(32, 22, 10, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(22, 93, 82, 0.14), transparent 32%),
+    radial-gradient(circle at top right, rgba(205, 164, 94, 0.18), transparent 30%),
+    linear-gradient(180deg, #fcfaf5 0%, var(--canvas) 100%);
+}
+
+a {
+  color: inherit;
+}
+
+.portfolio-shell {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 56px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.95fr);
+  gap: 24px;
+  align-items: stretch;
+  padding: 24px 0 36px;
+}
+
+.hero__copy,
+.hero__panel,
+.section,
+.card,
+.timeline__item,
+.contact-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+}
+
+.hero__copy,
+.hero__panel {
+  border-radius: 28px;
+  padding: clamp(24px, 4vw, 40px);
+}
+
+.eyebrow,
+.section__eyebrow,
+.card__eyebrow,
+.panel__label,
+.timeline__period,
+.contact-card__label {
+  margin: 0 0 12px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(3rem, 8vw, 6rem);
+  line-height: 0.92;
+  max-width: 10ch;
+}
+
+h2 {
+  font-size: clamp(1.9rem, 4vw, 2.7rem);
+  line-height: 1.02;
+}
+
+h3 {
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+
+.hero__role,
+.hero__tagline,
+.section__body,
+.card p,
+.timeline__item p,
+.facts dd,
+.contact-card__value {
+  color: var(--muted);
+}
+
+.hero__role {
+  margin: 18px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.hero__tagline {
+  margin: 18px 0 0;
+  max-width: 48ch;
+  font-size: 1.08rem;
+  line-height: 1.75;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 800;
+  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.button:hover,
+.button:focus-visible,
+.card__link:hover,
+.card__link:focus-visible,
+.contact-card:hover,
+.contact-card:focus-visible {
+  transform: translateY(-2px);
+}
+
+.button--primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.button--primary:hover,
+.button--primary:focus-visible {
+  background: var(--accent-strong);
+}
+
+.button--secondary {
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  gap: 18px;
+}
+
+.facts div {
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.facts div:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.facts dt {
+  margin: 0 0 6px;
+  font-weight: 800;
+}
+
+.facts dd {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.portfolio-content {
+  display: grid;
+  gap: 24px;
+}
+
+.section {
+  border-radius: 28px;
+  padding: clamp(24px, 4vw, 34px);
+}
+
+.section__heading {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.section__body--single p {
+  margin: 0;
+  max-width: 70ch;
+  line-height: 1.8;
+  font-size: 1.02rem;
+}
+
+.chip-grid,
+.card-grid,
+.contact-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.chip-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  font-weight: 700;
+}
+
+.card-grid,
+.contact-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.card,
+.contact-card,
+.timeline__item {
+  border-radius: 22px;
+  padding: 22px;
+}
+
+.card {
+  display: grid;
+  gap: 14px;
+}
+
+.card p {
+  margin: 0;
+  line-height: 1.72;
+}
+
+.card__link {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 4px;
+  color: var(--accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.section--split .timeline {
+  display: grid;
+  gap: 16px;
+}
+
+.timeline__item p {
+  margin: 10px 0 0;
+  line-height: 1.72;
+}
+
+.contact-card {
+  display: grid;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.contact-card__value {
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+@media (max-width: 840px) {
+  .portfolio-shell {
+    width: min(100% - 20px, 1120px);
+    padding-top: 16px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    max-width: none;
+    font-size: clamp(2.8rem, 14vw, 4.6rem);
+  }
+}
+
+@media (max-width: 560px) {
+  .hero__actions {
+    flex-direction: column;
+  }
+
+  .button {
+    width: 100%;
+  }
+
+  .chip-grid,
+  .card-grid,
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+}

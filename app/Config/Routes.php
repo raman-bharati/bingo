@@ -5,7 +5,7 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Home::index');
+$routes->get('/', 'Portfolio::index');
 
 $routes->get('bingo', 'BingoController::index');
 $routes->post('bingo/room/create', 'BingoController::createRoom');
