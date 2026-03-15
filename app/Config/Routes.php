@@ -6,6 +6,7 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 $routes->get('/', 'Portfolio::index');
+$routes->get('assets/portfolio.css', 'Portfolio::stylesheet');
 
 $routes->get('bingo', 'BingoController::index');
 $routes->post('bingo/room/create', 'BingoController::createRoom');

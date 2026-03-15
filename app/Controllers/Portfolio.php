@@ -71,4 +71,23 @@ class Portfolio extends BaseController
 
         return view('portfolio', $portfolio);
     }
+
+    public function stylesheet()
+    {
+        $cssPath = ROOTPATH . 'public/portfolio.css';
+
+        if (! is_file($cssPath)) {
+            return $this->response
+                ->setStatusCode(404)
+                ->setContentType('text/plain', 'utf-8')
+                ->setBody('/* portfolio.css not found */');
+        }
+
+        $css = file_get_contents($cssPath);
+
+        return $this->response
+            ->setHeader('Cache-Control', 'public, max-age=3600')
+            ->setContentType('text/css', 'utf-8')
+            ->setBody($css === false ? '/* Unable to load CSS */' : $css);
+    }
 }
