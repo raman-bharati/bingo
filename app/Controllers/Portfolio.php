@@ -6,65 +6,64 @@ class Portfolio extends BaseController
 {
     public function index(): string
     {
-        // Centralize placeholder content so customization is straightforward.
         $portfolio = [
             'site' => [
-                'name' => 'Your Name',
-                'role' => 'Full-Stack Developer',
-                'tagline' => 'I build reliable web products with clean UX and pragmatic engineering.',
+                'name' => 'Raman Bharati',
+                'role' => 'PHP / CodeIgniter Developer',
+                'tagline' => 'I build practical web products, real-time game flows, and clean PHP backends.',
                 'location' => 'Kathmandu, Nepal',
-                'email' => 'hello@example.com',
+                'email' => 'hello@ramanbharati.com.np',
                 'resumeUrl' => '#',
-                'githubUrl' => 'https://github.com/yourusername',
-                'linkedinUrl' => 'https://www.linkedin.com/in/yourusername/',
+                'githubUrl' => 'https://github.com/ramanbharati',
+                'linkedinUrl' => 'https://www.linkedin.com/in/ramanbharati/',
                 'gameUrl' => '/bingo',
             ],
-            'about' => 'This single-page portfolio is a starter you can deploy immediately. Replace the placeholder copy with your own background, strengths, and the kind of work you want to attract.',
+            'about' => 'I am a PHP and CodeIgniter developer from Nepal, focused on shipping useful products with a strong balance of backend structure and simple, effective interfaces. This portfolio highlights the kind of work I build: multiplayer game logic, API-driven features, and straightforward deployable web apps.',
             'skills' => [
                 'PHP / CodeIgniter 4',
-                'JavaScript / TypeScript',
+                'JavaScript / Client-side state handling',
                 'REST APIs',
                 'MySQL',
-                'UI implementation',
-                'Performance optimization',
+                'Real-time game workflows',
+                'Deployment and hosting setup',
             ],
             'projects' => [
                 [
-                    'title' => 'Featured Game Project',
-                    'summary' => 'A real-time multiplayer game experience with room management, live state updates, and a focused interface for fast play.',
+                    'title' => 'Bingo Multiplayer Game',
+                    'summary' => 'A real-time bingo room experience with room management, live state updates, player controls, and a mobile-friendly interface.',
                     'link' => '/bingo',
                     'linkLabel' => 'Play the game',
                 ],
                 [
-                    'title' => 'Project Placeholder One',
-                    'summary' => 'Describe a project that shows technical depth, clear business impact, or thoughtful product execution.',
+                    'title' => 'Api Testing',
+                    'summary' => 'A CodeIgniter API project for structured data handling, clean endpoints, and backend workflows that are easy to extend.',
                     'link' => '#',
-                    'linkLabel' => 'Add project link',
+                    'linkLabel' => 'Add live link',
                 ],
                 [
-                    'title' => 'Project Placeholder Two',
-                    'summary' => 'Use this spot for another case study, client build, API integration, dashboard, or automation project.',
+                    'title' => 'eSewa Integration Work',
+                    'summary' => 'Payment-flow implementation work focused on checkout, callbacks, and keeping the user journey simple and reliable.',
                     'link' => '#',
-                    'linkLabel' => 'Add project link',
+                    'linkLabel' => 'Add details',
                 ],
             ],
             'experience' => [
                 [
-                    'period' => '2024 - Present',
-                    'title' => 'Senior Developer Placeholder',
-                    'description' => 'Summarize your role, the systems you own, and the outcomes you improved for users or the business.',
+                    'period' => 'Current',
+                    'title' => 'Independent Web Developer',
+                    'description' => 'Building and maintaining PHP applications, including the portfolio site, the bingo game, and backend features that support them.',
                 ],
                 [
-                    'period' => '2022 - 2024',
-                    'title' => 'Developer Placeholder',
-                    'description' => 'Highlight collaboration, delivery speed, reliability work, or major features shipped.',
+                    'period' => 'Recent work',
+                    'title' => 'Product-focused Project Builder',
+                    'description' => 'Shipping deployable projects that emphasize simple UX, dependable backend logic, and practical delivery over unnecessary complexity.',
                 ],
             ],
             'education' => [
                 [
-                    'period' => '2020 - 2024',
-                    'title' => 'Degree / Program Placeholder',
-                    'description' => 'Add your institution, field of study, certifications, or notable academic work.',
+                    'period' => 'Self-directed learning',
+                    'title' => 'CodeIgniter, PHP, and deployment practice',
+                    'description' => 'Continuing to strengthen framework usage, deployment setup, and the habits needed to move a project from local development to production.',
                 ],
             ],
         ];

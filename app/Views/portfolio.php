@@ -24,7 +24,7 @@
   <div class="portfolio-shell">
     <header class="hero">
       <div class="hero__copy">
-        <p class="eyebrow">Portfolio starter</p>
+        <p class="eyebrow">Raman Bharati portfolio</p>
         <h1><?= esc($site['name']) ?></h1>
         <p class="hero__role"><?= esc($site['role']) ?> based in <?= esc($site['location']) ?></p>
         <p class="hero__tagline"><?= esc($site['tagline']) ?></p>
@@ -38,11 +38,11 @@
         <dl class="facts">
           <div>
             <dt>Focus</dt>
-            <dd>Web apps, APIs, and polished product delivery</dd>
+            <dd>PHP apps, APIs, and real-time game features</dd>
           </div>
           <div>
             <dt>Availability</dt>
-            <dd>Open for freelance, product, or full-time roles</dd>
+            <dd>Open for web, backend, and product work</dd>
           </div>
           <div>
             <dt>Contact</dt>
@@ -146,7 +146,7 @@
           </a>
           <a class="contact-card" href="<?= esc($site['resumeUrl']) ?>" target="_blank" rel="noopener noreferrer">
             <span class="contact-card__label">Resume</span>
-            <span class="contact-card__value">Replace with your resume URL</span>
+            <span class="contact-card__value">View or add your resume link</span>
           </a>
         </div>
       </section>
